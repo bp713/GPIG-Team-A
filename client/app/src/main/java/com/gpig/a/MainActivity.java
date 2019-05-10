@@ -18,8 +18,12 @@ import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.LinearLayout;
 
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
@@ -81,26 +85,19 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.main, menu);
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-
-        //noinspection SimplifiableIfStatement
-//        if (id == R.id.action_settings) {
-//            return true;
-//        }
-
-        return super.onOptionsItemSelected(item);
+    // this seems like a clunky way of doing things is there a better way?
+    public void onTicketClick(View v){
+        LinearLayout layout = (LinearLayout)v.getParent();
+        for(int index=0; index<layout.getChildCount(); ++index) {
+            View nextChild = layout.getChildAt(index);
+            if(nextChild.toString().contains("detailed_info")){
+                if(nextChild.getVisibility() != View.VISIBLE) {
+                    nextChild.setVisibility(View.VISIBLE);
+                }else {
+                    nextChild.setVisibility(View.GONE);
+                }
+            }
+        }
     }
 
 

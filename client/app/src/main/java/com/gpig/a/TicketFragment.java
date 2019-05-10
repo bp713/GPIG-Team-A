@@ -6,12 +6,15 @@ import android.support.v4.app.Fragment;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
 import com.gpig.a.tickets.Ticket;
 import com.gpig.a.tickets.TicketContent;
+
+import static android.content.ContentValues.TAG;
 
 
 /**
@@ -68,7 +71,7 @@ public class TicketFragment extends Fragment {
             } else {
                 recyclerView.setLayoutManager(new GridLayoutManager(context, mColumnCount));
             }
-            recyclerView.setAdapter(new MyTicketRecyclerViewAdapter(TicketContent.ITEMS, mListener));
+            recyclerView.setAdapter(new MyTicketRecyclerViewAdapter(TicketContent.ITEMS, mListener, getResources()));
         }
         return view;
     }
