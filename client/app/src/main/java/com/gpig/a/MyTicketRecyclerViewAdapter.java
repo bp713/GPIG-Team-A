@@ -17,7 +17,6 @@ import java.util.List;
 /**
  * {@link RecyclerView.Adapter} that can display a {@link Ticket} and makes a call to the
  * specified {@link OnListFragmentInteractionListener}.
- * TODO: Replace the implementation with code for your data type.
  */
 public class MyTicketRecyclerViewAdapter extends RecyclerView.Adapter<MyTicketRecyclerViewAdapter.ViewHolder> {
 

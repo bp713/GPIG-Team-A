@@ -9,6 +9,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+//TODO: check conditions and update check in display
 public class CheckInFragment extends Fragment {
 
     private CheckInViewModel mViewModel;

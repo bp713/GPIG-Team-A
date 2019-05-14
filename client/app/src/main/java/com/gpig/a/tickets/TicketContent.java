@@ -32,11 +32,12 @@ public class TicketContent {
     private static final int COUNT = 5;
 
     static {
-        // TODO Add some sample tickets.
+        addItem(new Ticket(String.valueOf(1), "Booking Code Sample", "Booking Ref: 19S5P4ZTVP"));
+        addItem(new Ticket(String.valueOf(2), "QR Sample", "", R.drawable.qr_test));
+        // TODO Add some real tickets.
         for (int i = 1; i <= COUNT; i++) {
-            addItem(createTicket(i));
+            addItem(createTicket(i+2));
         }
-        addItem(new Ticket(String.valueOf(COUNT + 1), "QR Sample Ticket", makeDetails(COUNT + 1), R.drawable.qr_test));
     }
 
     private static void addItem(Ticket item) {

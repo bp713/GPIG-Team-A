@@ -6,7 +6,6 @@ import android.support.v4.app.Fragment;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -14,7 +13,6 @@ import android.view.ViewGroup;
 import com.gpig.a.tickets.Ticket;
 import com.gpig.a.tickets.TicketContent;
 
-import static android.content.ContentValues.TAG;
 
 
 /**
@@ -25,9 +23,7 @@ import static android.content.ContentValues.TAG;
  */
 public class TicketFragment extends Fragment {
 
-    // TODO: Customize parameter argument names
     private static final String ARG_COLUMN_COUNT = "column-count";
-    // TODO: Customize parameters
     private int mColumnCount = 1;
     private OnListFragmentInteractionListener mListener;
 
@@ -38,7 +34,6 @@ public class TicketFragment extends Fragment {
     public TicketFragment() {
     }
 
-    // TODO: Customize parameter initialization
     @SuppressWarnings("unused")
     public static TicketFragment newInstance(int columnCount) {
         TicketFragment fragment = new TicketFragment();
@@ -105,7 +100,6 @@ public class TicketFragment extends Fragment {
      * >Communicating with Other Fragments</a> for more information.
      */
     public interface OnListFragmentInteractionListener {
-        // TODO: Update argument type and name
         void onListFragmentInteraction(Ticket item);
     }
 }

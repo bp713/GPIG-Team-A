@@ -13,4 +13,13 @@
     <!--<string name="menu_tools">Tools</string>-->
     <!--<string name="menu_share">Share</string>-->
     <!--<string name="menu_send">Send</string>-->
+
+    <string name="check_in_location_found">Location Found</string>
+    <string name="check_in_location_disabled">Location Services Disabled</string>
+    <string name="check_in_location_searching">Location Searching</string>
+    <string name="check_in_location_incorrect">Location Incorrect</string>
+    <string name="check_in_location_correct">Location Correct</string>
+    <string name="check_in_network_connected">Network Connected</string>
+    <string name="check_in_network_not_connected">No Network Connection</string>
+    <string name="check_in_button">Check In</string>
 </resources>
