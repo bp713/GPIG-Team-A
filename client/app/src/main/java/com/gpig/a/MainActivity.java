@@ -48,7 +48,7 @@ public class MainActivity extends AppCompatActivity
     private final int MY_PERMISSIONS_REQUEST_FINE_LOCATION = 1001;
     private LatLng source;
     private LatLng destination;
-    List<Polyline> polylines = new ArrayList<Polyline>();
+    List<Polyline> polylines = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -102,7 +102,7 @@ public class MainActivity extends AppCompatActivity
 
 
     @Override
-    public boolean onNavigationItemSelected(MenuItem item) {
+    public boolean onNavigationItemSelected(@NonNull MenuItem item) {
         // Handle navigation view item clicks here.
         int id = item.getItemId();
 
@@ -203,6 +203,11 @@ public class MainActivity extends AppCompatActivity
     @Override
     public void onListFragmentInteraction(Ticket item) {
 
+    }
+
+    public void onDistressCall(View v){
+        //TODO confirm user is in distress?
+        //TODO tell server user is in distress
     }
 
     @Override
