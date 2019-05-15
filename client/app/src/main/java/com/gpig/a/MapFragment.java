@@ -4,8 +4,6 @@ package com.gpig.a;
 import android.Manifest;
 import android.content.Context;
 import android.content.pm.PackageManager;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
@@ -13,6 +11,7 @@ import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.support.v4.content.ContextCompat;
@@ -21,22 +20,19 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
-import org.mapsforge.core.graphics.Color;
-import org.mapsforge.map.android.layers.MyLocationOverlay;
+import org.osmdroid.bonuspack.routing.Road;
+import org.osmdroid.bonuspack.routing.RoadManager;
 import org.osmdroid.config.Configuration;
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory;
 import org.osmdroid.util.GeoPoint;
+import org.osmdroid.views.CustomZoomButtonsController;
 import org.osmdroid.views.MapView;
-import org.osmdroid.views.overlay.ItemizedIconOverlay;
-import org.osmdroid.views.overlay.ItemizedOverlayWithFocus;
-import org.osmdroid.views.overlay.Overlay;
-import org.osmdroid.views.overlay.OverlayItem;
-import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider;
-import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay;
-
+import org.osmdroid.views.overlay.Marker;
+import org.osmdroid.bonuspack.routing.OSRMRoadManager;
+import org.osmdroid.bonuspack.routing.GraphHopperRoadManager;
+import org.osmdroid.views.overlay.Polyline;
 import java.util.ArrayList;
 
-//TODO: check conditions and update check in display
 public class MapFragment extends Fragment {
 
     private int MY_PERMISSIONS_REQUEST_FINE_LOCATION = 1001;
@@ -44,7 +40,8 @@ public class MapFragment extends Fragment {
     private MapLocationListener locationListener = null;
     private LocationManager locationManager = null;
     private GeoPoint currentLocation = null;
-    private ArrayList<OverlayItem> items = null;
+    private GeoPoint destinationLocation = null;
+    private String TAG = "MapFragment";
 
     public static MapFragment newInstance() {
         return new MapFragment();
@@ -59,14 +56,12 @@ public class MapFragment extends Fragment {
     @Override
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
-        // TODO: Use the ViewModel
 
         Configuration.getInstance().load(getContext(),
                 PreferenceManager.getDefaultSharedPreferences(getContext()));
 
         mapView = getView().findViewById(R.id.mapView);
-        mapView.setMinZoomLevel(5.0);
-        //mapView.setScrollableAreaLimitDouble(mapView.getBoundingBox());
+        mapView.setMinZoomLevel(8.0);
         mapView.setVerticalMapRepetitionEnabled(false);
         mapView.setTileSource(TileSourceFactory.MAPNIK);
         mapView.setUseDataConnection(true);
@@ -77,97 +72,119 @@ public class MapFragment extends Fragment {
             ActivityCompat.requestPermissions(getActivity(),
                     new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, MY_PERMISSIONS_REQUEST_FINE_LOCATION);
 
-        }
-        else {
+        } else {
             LocationManager locationManager = (LocationManager) getActivity().getSystemService(Context.LOCATION_SERVICE);
             locationListener = new MapLocationListener();
             locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, locationListener);
             Location location = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
-            if( location != null ) {
+            if (location != null) {
                 currentLocation = new GeoPoint(location.getLatitude(), location.getLongitude());
             }
 
             mapView.getController().setCenter(currentLocation);
 
-            items = new ArrayList<OverlayItem>();
-            items.add(new OverlayItem("Your Location", "This is where you are", new GeoPoint(currentLocation.getLatitude(), currentLocation.getLongitude()))); // Lat/Lon decimal degrees
+            Marker currentMarker = new Marker(mapView);
+            currentMarker.setPosition(new GeoPoint(currentLocation.getLatitude(), currentLocation.getLongitude()));
 
-            ItemizedOverlayWithFocus<OverlayItem> mOverlay = new ItemizedOverlayWithFocus<OverlayItem>(
-                    getActivity(), items, new CurrentLocationMarker());
-            mOverlay.setFocusItemsOnTap(true);
+            mapView.getOverlays().add(0, currentMarker);
 
-            mapView.getOverlays().add(mOverlay);
+            ArrayList<GeoPoint> points = new ArrayList<>();
+            GeoPoint destination = new GeoPoint(-33.865143, 151.209900);
+            points.add(currentLocation);
+            points.add(destination);
+
+            routeCourier(points, "GraphHopper");
+
+            Marker desMarker = new Marker(mapView);
+            desMarker.setPosition(destination);
+
+            mapView.getOverlays().add(desMarker);
+            mapView.invalidate();
         }
 
-
-
+        FloatingActionButton myFab = (FloatingActionButton) getView().findViewById(R.id.loc);
+        myFab.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                onCenterCall(v);
+            }
+        });
 
     }
 
-    private class CurrentLocationMarker implements ItemizedIconOverlay.OnItemGestureListener<OverlayItem> {
-        @Override
-        public boolean onItemSingleTapUp(final int index, final OverlayItem item) {
-            return false;
-        }
+    private void routeCourier(ArrayList<GeoPoint> points, String manager){
+        Road road = null;
+        if (manager.equals("OSRM")) {
+            OSRMRoadManager rm = new OSRMRoadManager(getContext());
+            road = rm.getRoad(points);
 
-        @Override
-        public boolean onItemLongPress(final int index, final OverlayItem item) {
-            return false;
         }
+        else if (manager.equals("GraphHopper")){
+            GraphHopperRoadManager gh = new GraphHopperRoadManager("eff4071c-2659-4d46-ad03-0097a984440c", false);
+            road = gh.getRoad(points);
+        }
+        else {
+            Log.w(TAG,"Invalid Routing Manager Specified");
+            return;
+        }
+        Polyline roadOverlay = RoadManager.buildRoadOverlay(road);
+        if (mapView.getOverlays().size() >= 2) {
+            mapView.getOverlays().remove(1);
+        }
+        mapView.getOverlays().add(1, roadOverlay);
 
     }
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         // if the permissions have changed then get the location
-        if (ContextCompat.checkSelfPermission(getContext(), android.Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+        if (ContextCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
 
             locationManager = (LocationManager) getActivity().getSystemService(Context.LOCATION_SERVICE);
             locationListener = new MapLocationListener();
-            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, locationListener);
+            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 10000, 10, locationListener);
             Location location = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
             if( location != null ) {
                 currentLocation = new GeoPoint(location.getLatitude(), location.getLongitude());
             }
+
+            mapView.getController().setCenter(currentLocation);
         }
     }
 
     public class MapLocationListener implements LocationListener {
 
         public void onLocationChanged(Location location) {
-            GeoPoint newLoc = new GeoPoint(location);
+            if (!(location.getLatitude() == currentLocation.getLatitude() && location.getLongitude() == currentLocation.getLongitude())) {
+                currentLocation = new GeoPoint(location);
+                Marker currentMarker = new Marker(mapView);
+                currentMarker.setPosition(new GeoPoint(currentLocation.getLatitude(), currentLocation.getLongitude()));
 
-            if (newLoc.getLatitude() != currentLocation.getLatitude() && newLoc.getLongitude() != currentLocation.getLongitude()) {
-                currentLocation = newLoc;
-                //mapView.getController().setCenter(currentLocation);
-                mapView.getController().animateTo(currentLocation);
+                mapView.getOverlays().remove(0);
+                mapView.getOverlays().add(0, currentMarker);
 
-                items = new ArrayList<OverlayItem>();
-                items.add(new OverlayItem("Your Location", "This is where you are",
-                        new GeoPoint(currentLocation.getLatitude(), currentLocation.getLongitude())));
+                ArrayList<GeoPoint> points = new ArrayList<>();
+                // This will come from the server
+                destinationLocation = new GeoPoint(-33.865143, 151.209900);
+                points.add(currentLocation);
+                points.add(destinationLocation);
 
-                ItemizedOverlayWithFocus<OverlayItem> mOverlay = new ItemizedOverlayWithFocus<OverlayItem>(
-                        getActivity(), items, new CurrentLocationMarker());
-                mOverlay.setFocusItemsOnTap(true);
+                // route with graphhopper however, later we need to load route from server somehow
+                routeCourier(points, "GraphHopper");
 
-                mapView.getOverlays().add(mOverlay);
-                mOverlay.setFocusItemsOnTap(true);
+                Marker desMarker = new Marker(mapView);
+                desMarker.setPosition(destinationLocation);
 
-                items.clear();
-                mapView.getOverlays().clear();
-                mapView.getOverlays().add(mOverlay);
-
+                mapView.getOverlays().add(desMarker);
+                mapView.invalidate();
             }
         }
+        public void onProviderDisabled(String provider) {}
+        public void onProviderEnabled(String provider) {}
+        public void onStatusChanged(String provider, int status, Bundle extras) {}
+    }
 
-        public void onProviderDisabled(String provider) {
-        }
-
-        public void onProviderEnabled(String provider) {
-        }
-
-        public void onStatusChanged(String provider, int status, Bundle extras) {
-        }
+    public void onCenterCall(View v){
+        mapView.getController().animateTo(currentLocation);
     }
 
 }

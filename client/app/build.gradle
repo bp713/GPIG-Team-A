@@ -32,4 +32,5 @@ dependencies {
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
     implementation 'org.osmdroid:osmdroid-mapsforge:+'
     implementation 'org.slf4j:slf4j-android:1.7.12'
+    implementation 'com.github.MKergall:osmbonuspack:+'
 }
