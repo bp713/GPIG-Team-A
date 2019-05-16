@@ -7,3 +7,6 @@ Overleaf final report: https://www.overleaf.com/project/5ccb48f3ea7fef0235b2a501
 The client folder contains an android studio project for the courier client side application
 
 ## Server
+The Server folder contains python code to create routes
+requires: https://github.com/graphhopper/directions-api-clients/tree/master/python
+
