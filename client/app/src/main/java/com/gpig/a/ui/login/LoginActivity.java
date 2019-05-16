@@ -10,6 +10,8 @@ import android.support.annotation.StringRes;
 import android.support.v7.app.AppCompatActivity;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Base64;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
@@ -19,13 +21,15 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.gpig.a.MainActivity;
+import com.google.android.gms.fido.Fido;
+import com.google.android.gms.fido.fido2.api.common.AuthenticatorAssertionResponse;
+import com.google.android.gms.fido.fido2.api.common.AuthenticatorAttestationResponse;
+import com.google.android.gms.fido.fido2.api.common.AuthenticatorErrorResponse;
 import com.gpig.a.R;
-import com.gpig.a.ui.login.LoginViewModel;
-import com.gpig.a.ui.login.LoginViewModelFactory;
+import com.gpig.a.fido.CustomFIDO2;
 
 public class LoginActivity extends AppCompatActivity {
-
+    private static final String TAG = "com.gpig.a";
     private LoginViewModel loginViewModel;
 
     @Override
@@ -118,12 +122,60 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     private void updateUiWithUser(LoggedInUserView model) {
-        String welcome = getString(R.string.welcome) + model.getDisplayName();
-        // TODO : initiate successful logged in experience
-        Intent myIntent = new Intent(this, MainActivity.class);
-        myIntent.putExtra("username", model.getDisplayName()); //TODO pass user info
-        startActivity(myIntent);
-        Toast.makeText(getApplicationContext(), welcome, Toast.LENGTH_LONG).show();
+        CustomFIDO2 fido2 = new CustomFIDO2(this);
+        fido2.sign();
+    }
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        switch (resultCode) {
+            case RESULT_OK:
+                if (data.hasExtra(Fido.FIDO2_KEY_ERROR_EXTRA)) {
+                    Log.d(TAG, "Received error response from Google Play Services FIDO2 API");
+                    AuthenticatorErrorResponse response =
+                            AuthenticatorErrorResponse.deserializeFromBytes(
+                                    data.getByteArrayExtra(Fido.FIDO2_KEY_ERROR_EXTRA));
+                    Toast.makeText(
+                            this, "Operation failed\n" + response, Toast.LENGTH_SHORT)
+                            .show();
+                } else if (requestCode == CustomFIDO2.REQUEST_CODE_REGISTER) {
+                    Log.d(TAG, "Received register response from Google Play Services FIDO2 API");
+                    AuthenticatorAttestationResponse response =
+                            AuthenticatorAttestationResponse.deserializeFromBytes(
+                                    data.getByteArrayExtra(Fido.FIDO2_KEY_RESPONSE_EXTRA));
+                    Toast.makeText(
+                            this,
+                            "Registration key handle:\n"
+                                    + Base64.encodeToString(response.getKeyHandle(), Base64.DEFAULT),
+                            Toast.LENGTH_SHORT)
+                            .show();
+                } else if (requestCode == CustomFIDO2.REQUEST_CODE_SIGN) {
+                    Log.d(TAG, "Received sign response from Google Play Services FIDO2 API");
+                    AuthenticatorAssertionResponse response =
+                            AuthenticatorAssertionResponse.deserializeFromBytes(
+                                    data.getByteArrayExtra(Fido.FIDO2_KEY_RESPONSE_EXTRA));
+                    Toast.makeText(
+                            this,
+                            "Sign key handle:\n" + Base64.encodeToString(response.getKeyHandle(), Base64.DEFAULT),
+                            Toast.LENGTH_SHORT)
+                            .show();
+//                    updateSignResponseToServer(response);
+                }
+                break;
+
+            case RESULT_CANCELED:
+                Toast.makeText(this, "Operation is cancelled", Toast.LENGTH_SHORT).show();
+                break;
+
+            default:
+                Toast.makeText(
+                        this,
+                        "Operation failed, with resultCode " + resultCode,
+                        Toast.LENGTH_SHORT)
+                        .show();
+                break;
+        }
     }
 
     private void showLoginFailed(@StringRes Integer errorString) {
