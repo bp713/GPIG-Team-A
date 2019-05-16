@@ -36,7 +36,6 @@ public class MyGraphHopperRoadManager extends RoadManager {
     protected boolean mWithElevation;
     protected boolean mAlternateAvailable;
 
-    /** mapping from GraphHopper directions to MapQuest maneuver IDs: */
     static final HashMap<Integer, Integer> MANEUVERS;
     static {
         MANEUVERS = new HashMap<Integer, Integer>();
@@ -54,9 +53,9 @@ public class MyGraphHopperRoadManager extends RoadManager {
     public MyGraphHopperRoadManager() {
         super();
         mServiceUrl = SERVICE;
-        mKey = apiKey;
+        //mKey = apiKey;
         mWithElevation = false;
-        mAlternateAvailable = alternateAvailable;
+        //mAlternateAvailable = alternateAvailable;
     }
 
     protected Road[] defaultRoad(ArrayList<GeoPoint> waypoints) {
