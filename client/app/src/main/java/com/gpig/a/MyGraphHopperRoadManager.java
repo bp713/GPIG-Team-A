@@ -1,6 +1,7 @@
 package com.gpig.a;
 
 import android.util.Log;
+import android.util.SparseIntArray;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -18,29 +19,15 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-/** get a route between a start and a destination point, going through a list of waypoints.
- * It uses GraphHopper, an open source routing service based on OpenSteetMap data. <br>
- *
- * It requests by default the GraphHopper demo site.
- * Use setService() to request another (for instance your own) GraphHopper-compliant service. <br>
- *
- * @see <a href="https://github.com/graphhopper/web-api/blob/master/docs-routing.md">GraphHopper</a>
- * @author M.Kergall
- */
-public class MyGraphHopperRoadManager extends RoadManager {
+public class MyGraphHopperRoadManager {
 
-    protected static final String SERVICE = "https://graphhopper.com/api/1/route?";
-    public static final int STATUS_NO_ROUTE = Road.STATUS_TECHNICAL_ISSUE+1;
     private final String TAG = "MyGHRM";
+    public GeoPoint source = null;
+    public GeoPoint destination = null;
 
-    protected String mServiceUrl;
-    protected String mKey;
-    protected boolean mWithElevation;
-    protected boolean mAlternateAvailable;
-
-    static final HashMap<Integer, Integer> MANEUVERS;
+    private static final SparseIntArray MANEUVERS;
     static {
-        MANEUVERS = new HashMap<Integer, Integer>();
+        MANEUVERS = new SparseIntArray();
         MANEUVERS.put(0, 1); //Continue
         MANEUVERS.put(1, 6); //Slight right
         MANEUVERS.put(2, 7); //Right
@@ -56,49 +43,38 @@ public class MyGraphHopperRoadManager extends RoadManager {
         super();
     }
 
-    protected Road[] defaultRoad(ArrayList<GeoPoint> waypoints) {
+    private Road[] defaultRoad(ArrayList<GeoPoint> waypoints) {
         Road[] roads = new Road[1];
         roads[0] = new Road(waypoints);
         return roads;
     }
 
-    public Road[] getRoads(ArrayList<GeoPoint> waypoints, boolean getAlternate, String json) {
+    public Road[] getRoads(String json) {
         String url = "OURURL";
         Log.d(TAG, "MyGraphHopper.getRoads:" + url);
         //TODO get info from server here?
         //String jString = BonusPackHelper.requestStringFromUrl(url);
         String jString = json;
-        if (jString == null) {
-            return defaultRoad(waypoints);
-        }
         try {
             JSONObject jRoot = new JSONObject(jString);
             JSONArray jPaths = jRoot.optJSONArray("paths");
-            if (jPaths == null || jPaths.length() == 0){
-                return defaultRoad(waypoints);
-				/*
-				road = new Road(waypoints);
-				road.mStatus = STATUS_NO_ROUTE;
-				return road;
-				*/
-            }
             Road[] roads = new Road[jPaths.length()];
             for (int r = 0; r < jPaths.length(); r++) {
                 JSONObject jPath = jPaths.getJSONObject(r);
+                // This gets the points from the JSON and adds them to an array
                 JSONObject route_geometry = jPath.getJSONObject("points");
                 JSONArray points = route_geometry.getJSONArray("coordinates");
                 int no = points.length();
                 ArrayList<GeoPoint> finalPoints = new ArrayList<>();
                 for (int i = 0; i < no; i++) {
-                    JSONArray test = points.getJSONArray(i);
-                    finalPoints.add(new GeoPoint(test.getDouble(1), test.getDouble(0)));
-                    Log.e(TAG, points.getJSONArray(i).toString());
-
+                    JSONArray lnglat = points.getJSONArray(i);
+                    finalPoints.add(new GeoPoint(lnglat.getDouble(1), lnglat.getDouble(0)));
                 }
                 Road road = new Road();
                 roads[r] = road;
-                //road.mRouteHigh = PolylineEncoder.decode(route_geometry.toString(), 10, mWithElevation);
                 road.mRouteHigh = finalPoints;
+                source = finalPoints.get(0);
+                destination = finalPoints.get(finalPoints.size() - 1);
                 JSONArray jInstructions = jPath.getJSONArray("instructions");
                 int n = jInstructions.length();
                 for (int i = 0; i < n; i++) {
@@ -120,32 +96,16 @@ public class MyGraphHopperRoadManager extends RoadManager {
                 road.mBoundingBox = new BoundingBox(jBBox.getDouble(3), jBBox.getDouble(2),
                         jBBox.getDouble(1), jBBox.getDouble(0));
                 road.mStatus = Road.STATUS_OK;
-                road.buildLegs(waypoints);
-                Log.d(BonusPackHelper.LOG_TAG, "MyGraphHopper.getRoads - finished");
+                Log.d(TAG, "MyGraphHopper.getRoads - finished");
             }
             return roads;
         } catch (JSONException e) {
             e.printStackTrace();
-            return defaultRoad(waypoints);
+            return new Road[]{};
         }
     }
 
-    @Override
-    public Road[] getRoads(ArrayList<GeoPoint> waypoints) {return null;}
-
-    @Override
-    public Road getRoad(ArrayList<GeoPoint> waypoints) {return null;}
-
-    public Road[] getRoads(ArrayList<GeoPoint> waypoints, String json) {
-        return getRoads(waypoints, true, json);
-    }
-
-    public Road getRoad(ArrayList<GeoPoint> waypoints, String json) {
-        Road[] roads = getRoads(waypoints, false, json);
-        return roads[0];
-    }
-
-    protected int getManeuverCode(int direction){
+    private int getManeuverCode(int direction){
         Integer code = MANEUVERS.get(direction);
         if (code != null)
             return code;
@@ -154,4 +114,3 @@ public class MyGraphHopperRoadManager extends RoadManager {
     }
 
 }
-

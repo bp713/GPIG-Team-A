@@ -39,6 +39,7 @@ import org.osmdroid.views.overlay.Polyline;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Calendar;
 
@@ -48,6 +49,7 @@ public class MapFragment extends Fragment {
     private MapLocationListener locationListener = null;
     private LocationManager locationManager = null;
     private GeoPoint currentLocation = null;
+    private GeoPoint sourceLocation = null;
     private GeoPoint destinationLocation = null;
     private String TAG = "MapFragment";
 
@@ -103,31 +105,22 @@ public class MapFragment extends Fragment {
             mapView.getOverlays().add(0, currentMarker);
         }
     }
-    private void routeCourier(ArrayList<GeoPoint> points, String manager){
-        Road road = null;
-        if (manager.equals("OSRM")) {
-            OSRMRoadManager rm = new OSRMRoadManager(getContext());
-            road = rm.getRoad(points);
-
-        }
-        else if (manager.equals("GraphHopper")){
-            GraphHopperRoadManager gh = new GraphHopperRoadManager("eff4071c-2659-4d46-ad03-0097a984440c", false);
-            road = gh.getRoad(points);
-        }
-        else if (manager.equals("MyGHRM")){
-            MyGraphHopperRoadManager mgh = new MyGraphHopperRoadManager();
-            String json = readJsonAsset("example_json/response.json");
-            road = mgh.getRoads(points, json)[0];
-        }
-        else {
-            Log.w(TAG,"Invalid Routing Manager Specified");
-        }
+    private void routeCourier(){
+        MyGraphHopperRoadManager mgh = new MyGraphHopperRoadManager();
+        String json = readJsonAsset("example_json/response.json");
+        Road road = mgh.getRoads(json)[0];
+        sourceLocation = mgh.source;
+        destinationLocation = mgh.destination;
         Polyline roadOverlay = RoadManager.buildRoadOverlay(road);
-        //if (mapView.getOverlays().size() >= 2) {
-        //    mapView.getOverlays().remove(1);
-        //}
         mapView.getOverlays().add(1, roadOverlay);
 
+        Marker srcMarker = new Marker(mapView);
+        Marker desMarker = new Marker(mapView);
+        srcMarker.setPosition(sourceLocation);
+        desMarker.setPosition(destinationLocation);
+        mapView.getOverlays().add(2, srcMarker);
+        mapView.getOverlays().add(3, desMarker);
+        mapView.invalidate();
     }
 
     private String readJsonAsset(String location){
@@ -138,7 +131,7 @@ public class MapFragment extends Fragment {
             byte[] buffer = new byte[size];
             is.read(buffer);
             is.close();
-            json = new String(buffer, "UTF-8");
+            json = new String(buffer, StandardCharsets.UTF_8);
         } catch (IOException ex) {
             ex.printStackTrace();
         }
@@ -151,18 +144,7 @@ public class MapFragment extends Fragment {
         // if the permissions have changed then get the location
         if (requestCode == 1){
             setCurrentLocation();
-            ArrayList<GeoPoint> points = new ArrayList<>();
-            GeoPoint destination = new GeoPoint(-33.865143, 151.209900);
-            points.add(currentLocation);
-            points.add(destination);
-
-            routeCourier(points, "MyGHRM");
-
-            Marker desMarker = new Marker(mapView);
-            desMarker.setPosition(destination);
-
-            mapView.getOverlays().add(desMarker);
-            mapView.invalidate();
+            routeCourier();
         }
         else {
             Log.e(TAG, "Error");
@@ -197,19 +179,7 @@ public class MapFragment extends Fragment {
         }
         else{
             setCurrentLocation();
-
-            ArrayList<GeoPoint> points = new ArrayList<>();
-            GeoPoint destination = new GeoPoint(-33.865143, 151.209900);
-            points.add(currentLocation);
-            points.add(destination);
-
-            routeCourier(points, "MyGHRM");
-
-            Marker desMarker = new Marker(mapView);
-            desMarker.setPosition(destination);
-
-            mapView.getOverlays().add(desMarker);
-            mapView.invalidate();
+            routeCourier();
         }
     }
 
@@ -223,20 +193,6 @@ public class MapFragment extends Fragment {
 
                 mapView.getOverlays().remove(0);
                 mapView.getOverlays().add(0, currentMarker);
-
-                ArrayList<GeoPoint> points = new ArrayList<>();
-                // This will come from the server
-                destinationLocation = new GeoPoint(-33.865143, 151.209900);
-                points.add(currentLocation);
-                points.add(destinationLocation);
-
-                // route with graphhopper however, later we need to load route from server somehow
-                routeCourier(points, "MyGHRM");
-
-                Marker desMarker = new Marker(mapView);
-                desMarker.setPosition(destinationLocation);
-
-                mapView.getOverlays().add(desMarker);
                 mapView.invalidate();
             }
         }
@@ -249,4 +205,18 @@ public class MapFragment extends Fragment {
         mapView.getController().animateTo(currentLocation);
     }
 
+    @Override
+    public void onPause(){
+        super.onPause();
+    }
+
+    @Override
+    public void onResume(){
+        super.onResume();
+    }
+
+    @Override
+    public void onStop(){
+        super.onStop();
+    }
 }
