@@ -1,0 +1,13 @@
+<h1>Welcome {{ controller.name }}</h1>
+<p>Select a courier</p>
+<select>
+{% for courier in controller.courier_set.all %}
+    <option>Courier {{courier.pk}}, Current Location : {{ courier.location }}</option>
+{% endfor %}
+</select><br>
+
+<form>
+    Collection Point: <input type="text" name="point1"><br>
+    Delivery Point:  <input type="text" name="point2"><br> 
+    <input type="submit" value="Find Routes">
+</form>
