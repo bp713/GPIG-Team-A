@@ -1,13 +1,9 @@
 package com.gpig.a;
 
 import android.Manifest;
-import android.content.Context;
 import android.content.pm.PackageManager;
-import android.graphics.Color;
-import android.location.Location;
-import android.location.LocationListener;
-import android.location.LocationManager;
 import android.os.Bundle;
+import android.os.StrictMode;
 import android.support.annotation.NonNull;
 import android.support.design.widget.NavigationView;
 import android.support.v4.app.ActivityCompat;
@@ -19,40 +15,31 @@ import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
-import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.ViewGroup;
+
 import android.widget.LinearLayout;
 
-import com.google.android.gms.maps.GoogleMap;
-import com.google.android.gms.maps.OnMapReadyCallback;
-import com.google.android.gms.maps.SupportMapFragment;
-import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.MarkerOptions;
-import com.google.android.gms.maps.model.Polyline;
-import com.google.android.gms.maps.model.PolylineOptions;
 import com.gpig.a.tickets.Ticket;
 
+import org.osmdroid.util.GeoPoint;
+import org.osmdroid.views.overlay.Marker;
+
 import java.util.ArrayList;
-import java.util.List;
-
-
 
 public class MainActivity extends AppCompatActivity
-        implements NavigationView.OnNavigationItemSelectedListener, OnMapReadyCallback, TicketFragment.OnListFragmentInteractionListener {
+        implements NavigationView.OnNavigationItemSelectedListener, TicketFragment.OnListFragmentInteractionListener {
 
-    private GoogleMap mMap;
-    private SupportMapFragment mapFragment;
-
-    private final int MY_PERMISSIONS_REQUEST_FINE_LOCATION = 1001;
-    private LatLng source;
-    private LatLng destination;
-    List<Polyline> polylines = new ArrayList<>();
+    private MapFragment mapFragment;
+    private final String TAG = "MainActivity";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
+        StrictMode.setThreadPolicy(policy);
+
         setContentView(R.layout.activity_main);
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -65,14 +52,15 @@ public class MainActivity extends AppCompatActivity
         navigationView.setNavigationItemSelectedListener(this);
 
         //setContentView(R.layout.activity_maps);
-        // Obtain the SupportMapFragment and get notified when the map is ready to be used.
-        mapFragment = new SupportMapFragment();
+        // Obtain the SupportMapFragment and get notified when the fragment_map is ready to be used.
+        mapFragment = new MapFragment();
         final FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
         ft.replace(R.id.container, mapFragment, "MapFragment");
         ft.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE);
         ft.addToBackStack(null);
         ft.commit();
-        mapFragment.getMapAsync(this);
+
+
     }
 
     @Override
@@ -131,74 +119,6 @@ public class MainActivity extends AppCompatActivity
         return true;
     }
 
-    private class CourierLocationListener implements LocationListener {
-
-        @Override
-        public void onLocationChanged(Location loc) {
-            // remove old lines - TODO maybe only remove the line with its start as the old source
-            for (Polyline line: polylines){
-                line.remove();
-            }
-
-            source = new LatLng(loc.getLatitude(), loc.getLongitude());
-
-            Polyline l = mMap.addPolyline(new PolylineOptions()
-                    .add(source, destination)
-                    .width(5)
-                    .color(Color.BLUE));
-
-            // keep track of the lines on the map
-            polylines.add(l);
-        }
-
-        @Override
-        public void onProviderDisabled(String provider) {
-        }
-
-        @Override
-        public void onProviderEnabled(String provider) {
-        }
-
-        @Override
-        public void onStatusChanged(String provider, int status, Bundle extras) {
-        }
-    }
-
-    @Override
-    public void onMapReady(GoogleMap googleMap) {
-        mMap = googleMap;
-        mMap.getUiSettings().setZoomControlsEnabled(true);
-
-        // Removes options to open in google maps
-        mMap.getUiSettings().setMapToolbarEnabled(false);
-
-        // if we don't have the permission request it
-        if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) !=
-                PackageManager.PERMISSION_GRANTED) {
-
-            ActivityCompat.requestPermissions(MainActivity.this,
-                    new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, MY_PERMISSIONS_REQUEST_FINE_LOCATION);
-
-        }
-        else {
-            LocationManager locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-            LocationListener locationListener = new CourierLocationListener();
-
-            // shows location on the map
-            mMap.setMyLocationEnabled(true);
-            // allows centering on our location
-            mMap.getUiSettings().setMyLocationButtonEnabled(true);
-
-            locationManager.requestLocationUpdates(
-                    LocationManager.GPS_PROVIDER, 5000, 10, locationListener);
-        }
-
-        // Add a marker in Sydney and move the camera
-        destination = new LatLng(-34, 151);
-        mMap.addMarker(new MarkerOptions().position(destination).title("Marker in destination").alpha(0.8f));
-
-
-    }
 
     @Override
     public void onListFragmentInteraction(Ticket item) {
@@ -210,21 +130,4 @@ public class MainActivity extends AppCompatActivity
         //TODO tell server user is in distress
     }
 
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        // if the permissions have changed then get the location
-        if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-
-            LocationManager locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-            LocationListener locationListener = new CourierLocationListener();
-
-            // shows location on the map
-            mMap.setMyLocationEnabled(true);
-            // allows centering on our location
-            mMap.getUiSettings().setMyLocationButtonEnabled(true);
-
-            locationManager.requestLocationUpdates(
-                    LocationManager.GPS_PROVIDER, 5000, 10, locationListener);
-        }
-    }
 }
