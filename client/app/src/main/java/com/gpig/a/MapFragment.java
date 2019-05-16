@@ -36,18 +36,14 @@ import org.osmdroid.views.overlay.Marker;
 import org.osmdroid.bonuspack.routing.OSRMRoadManager;
 import org.osmdroid.bonuspack.routing.GraphHopperRoadManager;
 import org.osmdroid.views.overlay.Polyline;
+
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Calendar;
 
 public class MapFragment extends Fragment {
-
-    private final int MY_PERMISSIONS_REQUEST_ACCESS_NETWORK_STATE = 1001;
-    private final int MY_PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE = 1002;
-    private final int MY_PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE = 1003;
-    private final int MY_PERMISSIONS_REQUEST_ACCESS_COARSE_LOCATION = 1004;
-    private final int MY_PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 1005;
-    private final int MY_PERMISSIONS_REQUEST_ACCESS_WIFI_STATE = 1006;
-
+    
     private MapView mapView = null;
     private MapLocationListener locationListener = null;
     private LocationManager locationManager = null;
@@ -73,7 +69,7 @@ public class MapFragment extends Fragment {
                 PreferenceManager.getDefaultSharedPreferences(getContext()));
 
         mapView = getView().findViewById(R.id.mapView);
-        mapView.setMinZoomLevel(8.0);
+        mapView.setMinZoomLevel(3.0);
         mapView.setVerticalMapRepetitionEnabled(false);
         mapView.setTileSource(TileSourceFactory.MAPNIK);
         mapView.setUseDataConnection(true);
@@ -118,16 +114,35 @@ public class MapFragment extends Fragment {
             GraphHopperRoadManager gh = new GraphHopperRoadManager("eff4071c-2659-4d46-ad03-0097a984440c", false);
             road = gh.getRoad(points);
         }
+        else if (manager.equals("MyGHRM")){
+            MyGraphHopperRoadManager mgh = new MyGraphHopperRoadManager();
+            String json = readJsonAsset("example_json/response.json");
+            road = mgh.getRoads(points, json)[0];
+        }
         else {
             Log.w(TAG,"Invalid Routing Manager Specified");
-            return;
         }
         Polyline roadOverlay = RoadManager.buildRoadOverlay(road);
-        if (mapView.getOverlays().size() >= 2) {
-            mapView.getOverlays().remove(1);
-        }
+        //if (mapView.getOverlays().size() >= 2) {
+        //    mapView.getOverlays().remove(1);
+        //}
         mapView.getOverlays().add(1, roadOverlay);
 
+    }
+
+    private String readJsonAsset(String location){
+        String json = null;
+        try {
+            InputStream is = getActivity().getAssets().open(location);
+            int size = is.available();
+            byte[] buffer = new byte[size];
+            is.read(buffer);
+            is.close();
+            json = new String(buffer, "UTF-8");
+        } catch (IOException ex) {
+            ex.printStackTrace();
+        }
+        return json;
     }
 
     @Override
@@ -141,7 +156,7 @@ public class MapFragment extends Fragment {
             points.add(currentLocation);
             points.add(destination);
 
-            routeCourier(points, "OSRM");
+            routeCourier(points, "MyGHRM");
 
             Marker desMarker = new Marker(mapView);
             desMarker.setPosition(destination);
@@ -188,7 +203,7 @@ public class MapFragment extends Fragment {
             points.add(currentLocation);
             points.add(destination);
 
-            routeCourier(points, "OSRM");
+            routeCourier(points, "MyGHRM");
 
             Marker desMarker = new Marker(mapView);
             desMarker.setPosition(destination);
@@ -216,7 +231,7 @@ public class MapFragment extends Fragment {
                 points.add(destinationLocation);
 
                 // route with graphhopper however, later we need to load route from server somehow
-                routeCourier(points, "OSRM");
+                routeCourier(points, "MyGHRM");
 
                 Marker desMarker = new Marker(mapView);
                 desMarker.setPosition(destinationLocation);
