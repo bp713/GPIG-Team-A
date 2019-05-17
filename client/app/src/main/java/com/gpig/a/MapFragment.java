@@ -64,10 +64,11 @@ public class MapFragment extends Fragment {
                 PreferenceManager.getDefaultSharedPreferences(getContext()));
 
         mapView = getView().findViewById(R.id.mapView);
-        mapView.setMinZoomLevel(8.0);
+        mapView.setMinZoomLevel(7.0);
         mapView.setVerticalMapRepetitionEnabled(false);
         mapView.setTileSource(TileSourceFactory.MAPNIK);
         mapView.setUseDataConnection(true);
+        mapView.setMultiTouchControls(true);
 
         requestAllPermissions();
 
