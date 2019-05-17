@@ -3,7 +3,8 @@ import time
 import swagger_client
 from swagger_client.rest import ApiException
 from pprint import pprint
-
+import json
+from breakuproute import break_up_route
 # create an instance of the API class
 api_instance = swagger_client.RoutingApi()
 point = ['51.51456185,-0.03501226201922958','53.4794892,-2.2451148'] # list[str] | Specify multiple points for which the route should be calculated. The order is important. Specify at least two points.
@@ -18,7 +19,7 @@ point_hint = [] # list[str] | Optional parameter. Specifies a hint for each `poi
 ch_disable = True # bool | Use this parameter in combination with one or more parameters of this table (optional)
 weighting = 'shortest' # str | Which kind of 'best' route calculation you need. Other option is `shortest` (e.g. for `vehicle=foot` or `bike`), `short_fastest` if time and distance is expensive e.g. for `vehicle=truck` (optional)
 edge_traversal = False # bool | Use `true` if you want to consider turn restrictions for bike and motor vehicles. Keep in mind that the response time is roughly 2 times slower. (optional)
-algorithm = 'dijkstra' # str | The algorithm to calculate the route. Other options are `dijkstra`, `astar`, `astarbi`, `alternative_route` and `round_trip` (optional)
+algorithm = 'alternative_route' # str | The algorithm to calculate the route. Other options are `dijkstra`, `astar`, `astarbi`, `alternative_route` and `round_trip` (optional)
 heading = 56 # int | Favour a heading direction for a certain point. Specify either one heading for the start point or as many as there are points. In this case headings are associated by their order to the specific points. Headings are given as north based clockwise angle between 0 and 360 degree. This parameter also influences the tour generated with `algorithm=round_trip` and force the initial direction. (optional)
 heading_penalty = 56 # int | Penalty for omitting a specified heading. The penalty corresponds to the accepted time delay in seconds in comparison to the route without a heading. (optional)
 pass_through = True # bool | If `true` u-turns are avoided at via-points with regard to the `heading_penalty`. (optional)
@@ -30,11 +31,23 @@ alternative_route_max_weight_factor = 56 # int | If `algorithm=alternative_route
 alternative_route_max_share_factor = 56 # int | If `algorithm=alternative_route` this parameter specifies how much alternatives routes can have maximum in common with the optimal route. Increasing can lead to worse alternatives. (optional)
 avoid = 'avoid_example' # str | comma separate list to avoid certain roads. You can avoid motorway, ferry, tunnel or track (optional)
 
+maxtraveltime=3600000
+coordinates = []
 try:
     # Routing Request
     #api_response = api_instance.route_get(point, points_encoded, key, locale=locale, instructions=instructions, vehicle=vehicle, elevation=elevation, calc_points=calc_points, point_hint=point_hint, ch_disable=ch_disable, weighting=weighting, edge_traversal=edge_traversal, algorithm=algorithm, heading=heading, heading_penalty=heading_penalty, pass_through=pass_through, details=details, round_trip_distance=round_trip_distance, round_trip_seed=round_trip_seed, alternative_route_max_paths=alternative_route_max_paths, alternative_route_max_weight_factor=alternative_route_max_weight_factor, alternative_route_max_share_factor=alternative_route_max_share_factor, avoid=avoid)
-    api_response = api_instance.route_get(point, points_encoded, key)
-    pprint(api_response)
+    api_response = api_instance.route_get(point, points_encoded, key,alternative_route_max_weight_factor=alternative_route_max_weight_factor, alternative_route_max_share_factor=alternative_route_max_share_factor,ch_disable=ch_disable)
+    #pprint(api_response)
+    coordinates.append(point[0])
+    coordinates += break_up_route(api_response.to_dict(),maxtraveltime)
+    coordinates.append(point[-1])
+    #print(coordinates)
+    for i in range(0,len(coordinates)-1):
+    	api_response2 = api_instance.route_get([coordinates[i],coordinates[i+1]],points_encoded,key)
+    	f = open('route'+str(i)+'.txt','w+')
+    	f.write(json.dumps(api_response2.to_dict()))
+    	f.close()
+
 except ApiException as e:
     print("Exception when calling RoutingApi->route_get: %s\n" % e)
 
