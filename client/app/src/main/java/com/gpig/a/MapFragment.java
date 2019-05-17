@@ -2,10 +2,7 @@
 package com.gpig.a;
 
 import android.Manifest;
-import android.app.AlarmManager;
-import android.app.PendingIntent;
 import android.content.Context;
-import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.location.LocationListener;
@@ -23,25 +20,20 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
-import com.google.android.gms.maps.SupportMapFragment;
+import com.gpig.a.utils.IconUtils;
 
 import org.osmdroid.bonuspack.routing.Road;
 import org.osmdroid.bonuspack.routing.RoadManager;
 import org.osmdroid.config.Configuration;
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory;
 import org.osmdroid.util.GeoPoint;
-import org.osmdroid.views.CustomZoomButtonsController;
 import org.osmdroid.views.MapView;
 import org.osmdroid.views.overlay.Marker;
-import org.osmdroid.bonuspack.routing.OSRMRoadManager;
-import org.osmdroid.bonuspack.routing.GraphHopperRoadManager;
 import org.osmdroid.views.overlay.Polyline;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Calendar;
 
 public class MapFragment extends Fragment {
     
@@ -71,7 +63,7 @@ public class MapFragment extends Fragment {
                 PreferenceManager.getDefaultSharedPreferences(getContext()));
 
         mapView = getView().findViewById(R.id.mapView);
-        mapView.setMinZoomLevel(3.0);
+        mapView.setMinZoomLevel(8.0);
         mapView.setVerticalMapRepetitionEnabled(false);
         mapView.setTileSource(TileSourceFactory.MAPNIK);
         mapView.setUseDataConnection(true);
@@ -89,7 +81,7 @@ public class MapFragment extends Fragment {
 
     private void setCurrentLocation(){
         if (ContextCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-            LocationManager locationManager = (LocationManager) getActivity().getSystemService(Context.LOCATION_SERVICE);
+            locationManager = (LocationManager) getActivity().getSystemService(Context.LOCATION_SERVICE);
             locationListener = new MapLocationListener();
             locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 10000, 10, locationListener);
             Location location = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
@@ -100,6 +92,7 @@ public class MapFragment extends Fragment {
             mapView.getController().setCenter(currentLocation);
 
             Marker currentMarker = new Marker(mapView);
+            currentMarker.setIcon(IconUtils.getMapIcon(getContext(), "current"));
             currentMarker.setPosition(new GeoPoint(currentLocation.getLatitude(), currentLocation.getLongitude()));
 
             mapView.getOverlays().add(0, currentMarker);
@@ -111,11 +104,14 @@ public class MapFragment extends Fragment {
         Road road = mgh.getRoads(json)[0];
         sourceLocation = mgh.source;
         destinationLocation = mgh.destination;
+        mapView.zoomToBoundingBox(road.mBoundingBox, true); // might need to calc this when its split up
         Polyline roadOverlay = RoadManager.buildRoadOverlay(road);
         mapView.getOverlays().add(1, roadOverlay);
 
         Marker srcMarker = new Marker(mapView);
         Marker desMarker = new Marker(mapView);
+        srcMarker.setIcon(IconUtils.getMapIcon(getContext(), "src"));
+        desMarker.setIcon(IconUtils.getMapIcon(getContext(), "des"));
         srcMarker.setPosition(sourceLocation);
         desMarker.setPosition(destinationLocation);
         mapView.getOverlays().add(2, srcMarker);
@@ -189,6 +185,7 @@ public class MapFragment extends Fragment {
             if (!(location.getLatitude() == currentLocation.getLatitude() && location.getLongitude() == currentLocation.getLongitude())) {
                 currentLocation = new GeoPoint(location);
                 Marker currentMarker = new Marker(mapView);
+                currentMarker.setIcon(IconUtils.getMapIcon(getContext(), "current"));
                 currentMarker.setPosition(new GeoPoint(currentLocation.getLatitude(), currentLocation.getLongitude()));
 
                 mapView.getOverlays().remove(0);
