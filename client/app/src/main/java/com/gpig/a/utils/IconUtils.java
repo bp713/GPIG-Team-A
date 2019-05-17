@@ -20,11 +20,11 @@ public final class IconUtils {
                 drawable.setColorFilter(Color.rgb(0, 191, 255), PorterDuff.Mode.SRC_IN);
                 break;
             case "src":
-                drawable = ContextCompat.getDrawable(c, R.drawable.location);
+                drawable = ContextCompat.getDrawable(c, R.drawable.location).mutate();
                 drawable.setColorFilter(Color.GREEN, PorterDuff.Mode.SRC_IN);
                 break;
             case "des":
-                drawable = ContextCompat.getDrawable(c, R.drawable.location);
+                drawable = ContextCompat.getDrawable(c, R.drawable.location).mutate();
                 drawable.setColorFilter(Color.RED, PorterDuff.Mode.SRC_IN);
                 break;
         }

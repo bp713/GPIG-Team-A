@@ -7,6 +7,7 @@ import android.content.pm.PackageManager;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
@@ -99,24 +100,31 @@ public class MapFragment extends Fragment {
         }
     }
     private void routeCourier(){
-        MyGraphHopperRoadManager mgh = new MyGraphHopperRoadManager();
         String json = readJsonAsset("example_json/response.json");
-        Road road = mgh.getRoads(json)[0];
-        sourceLocation = mgh.source;
-        destinationLocation = mgh.destination;
-        mapView.zoomToBoundingBox(road.mBoundingBox, true); // might need to calc this when its split up
-        Polyline roadOverlay = RoadManager.buildRoadOverlay(road);
-        mapView.getOverlays().add(1, roadOverlay);
+        RouteCourierTask asyncTask = new RouteCourierTask((new RouteCourierTask.AsyncResponse(){
 
-        Marker srcMarker = new Marker(mapView);
-        Marker desMarker = new Marker(mapView);
-        srcMarker.setIcon(IconUtils.getMapIcon(getContext(), "src"));
-        desMarker.setIcon(IconUtils.getMapIcon(getContext(), "des"));
-        srcMarker.setPosition(sourceLocation);
-        desMarker.setPosition(destinationLocation);
-        mapView.getOverlays().add(2, srcMarker);
-        mapView.getOverlays().add(3, desMarker);
-        mapView.invalidate();
+            @Override
+            public void processFinish(Object[] output){
+                Road road = (Road) output[0];
+                sourceLocation = (GeoPoint) output[1];
+                destinationLocation = (GeoPoint) output[2];
+                mapView.zoomToBoundingBox(road.mBoundingBox, true); // might need to calc this when its split up
+                Polyline roadOverlay = RoadManager.buildRoadOverlay(road);
+                mapView.getOverlays().add(1, roadOverlay);
+
+                Marker srcMarker = new Marker(mapView);
+                Marker desMarker = new Marker(mapView);
+                srcMarker.setIcon(IconUtils.getMapIcon(getContext(), "src"));
+                desMarker.setIcon(IconUtils.getMapIcon(getContext(), "des"));
+                srcMarker.setPosition(sourceLocation);
+                desMarker.setPosition(destinationLocation);
+                mapView.getOverlays().add(2, srcMarker);
+                mapView.getOverlays().add(3, desMarker);
+                mapView.invalidate();
+            }
+        }));
+
+        asyncTask.execute(json);
     }
 
     private String readJsonAsset(String location){
@@ -215,5 +223,30 @@ public class MapFragment extends Fragment {
     @Override
     public void onStop(){
         super.onStop();
+    }
+
+    static class RouteCourierTask extends AsyncTask<String, Integer, Object[]> {
+
+        public interface AsyncResponse {
+            void processFinish(Object[] output);
+        }
+
+        private AsyncResponse delegate = null;
+
+        private RouteCourierTask(AsyncResponse delegate){
+            this.delegate = delegate;
+        }
+
+        @Override
+        protected Object[] doInBackground(String... params) {
+            MyGraphHopperRoadManager mgh = new MyGraphHopperRoadManager();
+            Road road = mgh.getRoads(params[0])[0];
+            return new Object[]{road, mgh.source, mgh.destination};
+        }
+
+        @Override
+        protected void onPostExecute(Object[] result) {
+            delegate.processFinish(result);
+        }
     }
 }
