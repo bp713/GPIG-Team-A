@@ -13,6 +13,7 @@ import android.view.ViewGroup;
 public class CheckInFragment extends Fragment {
 
     private CheckInViewModel mViewModel;
+    private final String TAG = "TicketFragment";
 
     public static CheckInFragment newInstance() {
         return new CheckInFragment();

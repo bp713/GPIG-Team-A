@@ -29,7 +29,7 @@ import com.gpig.a.R;
 import com.gpig.a.fido.CustomFIDO2;
 
 public class LoginActivity extends AppCompatActivity {
-    private static final String TAG = "com.gpig.a";
+    private static final String TAG = "LoginActivity";
     private LoginViewModel loginViewModel;
 
     @Override
@@ -123,8 +123,10 @@ public class LoginActivity extends AppCompatActivity {
 
     private void updateUiWithUser(LoggedInUserView model) {
         CustomFIDO2 fido2 = new CustomFIDO2(this);
+        fido2.register();
         fido2.sign();
     }
+
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
@@ -150,6 +152,7 @@ public class LoginActivity extends AppCompatActivity {
                                     + Base64.encodeToString(response.getKeyHandle(), Base64.DEFAULT),
                             Toast.LENGTH_SHORT)
                             .show();
+//                    updateRegisterResponseToServer(response);
                 } else if (requestCode == CustomFIDO2.REQUEST_CODE_SIGN) {
                     Log.d(TAG, "Received sign response from Google Play Services FIDO2 API");
                     AuthenticatorAssertionResponse response =

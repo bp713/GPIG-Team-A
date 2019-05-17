@@ -24,6 +24,7 @@ import com.gpig.a.tickets.TicketContent;
 public class TicketFragment extends Fragment {
 
     private static final String ARG_COLUMN_COUNT = "column-count";
+    private final String TAG = "TicketFragment";
     private int mColumnCount = 1;
     private OnListFragmentInteractionListener mListener;
 
