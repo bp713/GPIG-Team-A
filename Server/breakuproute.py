@@ -1,11 +1,11 @@
 import json
 
-maxtraveltime = 3600000 #1 hour for the purposes of testing, should change
+#maxtraveltime = 3600000 #1 hour for the purposes of testing, should change
 
-with open('routejson.txt') as json_file:
-	data = json.load(json_file)
+#with open('routejson.txt') as json_file:
+#	data = json.load(json_file)
 
-def break_up_route(route,maxtraveltime):
+def break_up_route(data,maxtraveltime):
 	time=0
 	stops = []
 	for i in range(0,len(data['paths'][0]['instructions'])):
