@@ -49,12 +49,7 @@ public class MyGraphHopperRoadManager {
         return roads;
     }
 
-    public Road[] getRoads(String json) {
-        String url = "OURURL";
-        Log.d(TAG, "MyGraphHopper.getRoads:" + url);
-        //TODO get info from server here?
-        //String jString = BonusPackHelper.requestStringFromUrl(url);
-        String jString = json;
+    public Road[] getRoads(String jString) {
         try {
             JSONObject jRoot = new JSONObject(jString);
             JSONArray jPaths = jRoot.optJSONArray("paths");
@@ -93,8 +88,9 @@ public class MyGraphHopperRoadManager {
                 road.mLength = jPath.getDouble("distance") / 1000.0;
                 road.mDuration = jPath.getInt("time") / 1000.0;
                 JSONArray jBBox = jPath.getJSONArray("bbox");
-                road.mBoundingBox = new BoundingBox(jBBox.getDouble(3), jBBox.getDouble(2),
-                        jBBox.getDouble(1), jBBox.getDouble(0));
+                road.mBoundingBox = new BoundingBox(jBBox.getDouble(3),
+                        jBBox.getDouble(2), jBBox.getDouble(1),
+                        jBBox.getDouble(0));
                 road.mStatus = Road.STATUS_OK;
                 Log.d(TAG, "MyGraphHopper.getRoads - finished");
             }

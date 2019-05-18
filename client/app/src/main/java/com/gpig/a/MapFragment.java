@@ -21,7 +21,10 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
-import com.gpig.a.utils.IconUtils;
+import com.gpig.a.utils.FileUtils;
+import com.gpig.a.utils.MapUtils;
+import com.gpig.a.utils.RouteUtils;
+import com.gpig.a.utils.StatusUtils;
 
 import org.osmdroid.bonuspack.routing.Road;
 import org.osmdroid.bonuspack.routing.RoadManager;
@@ -31,10 +34,6 @@ import org.osmdroid.util.GeoPoint;
 import org.osmdroid.views.MapView;
 import org.osmdroid.views.overlay.Marker;
 import org.osmdroid.views.overlay.Polyline;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
 
 public class MapFragment extends Fragment {
     
@@ -65,6 +64,7 @@ public class MapFragment extends Fragment {
 
         mapView = getView().findViewById(R.id.mapView);
         mapView.setMinZoomLevel(7.0);
+        mapView.setMaxZoomLevel(18.0);
         mapView.setVerticalMapRepetitionEnabled(false);
         mapView.setTileSource(TileSourceFactory.MAPNIK);
         mapView.setUseDataConnection(true);
@@ -72,7 +72,7 @@ public class MapFragment extends Fragment {
 
         requestAllPermissions();
 
-        FloatingActionButton myFab = (FloatingActionButton) getView().findViewById(R.id.loc);
+        FloatingActionButton myFab = getView().findViewById(R.id.loc);
         myFab.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 onCenterCall(v);
@@ -91,17 +91,34 @@ public class MapFragment extends Fragment {
                 currentLocation = new GeoPoint(location.getLatitude(), location.getLongitude());
             }
 
-            mapView.getController().setCenter(currentLocation);
-
-            Marker currentMarker = new Marker(mapView);
-            currentMarker.setIcon(IconUtils.getMapIcon(getContext(), "current"));
-            currentMarker.setPosition(new GeoPoint(currentLocation.getLatitude(), currentLocation.getLongitude()));
-
-            mapView.getOverlays().add(0, currentMarker);
+            if (currentLocation != null) {
+                mapView.getController().setCenter(currentLocation);
+                mapView.getOverlays().add(0, MapUtils.createMarker(mapView, getContext(), "current", currentLocation));
+            }
         }
     }
     private void routeCourier(){
-        String json = readJsonAsset("example_json/response.json");
+        String json = null;
+        String filename = "Route.json";
+        if (StatusUtils.isNetworkAvailable(getActivity())){
+            //connect to the server?
+            //String jString = BonusPackHelper.requestStringFromUrl(url); use this???
+            json = FileUtils.readJsonAsset(getActivity(), "example_route/route3.json");
+            // if the route is different from the one stored then update it
+            if (RouteUtils.hasRouteChanged(getActivity(), filename, json)) {
+                FileUtils.writeToInternalStorage(getActivity(), filename, json);
+            }
+        }
+        else {
+            if (FileUtils.doesFileExist(getActivity(), filename)) {
+                json = FileUtils.readFromInternalStorage(getActivity(), filename);
+            }
+            else {
+                // display a popup saying connect to the internet?
+                Log.e(TAG, "No internet and no route downloaded");
+            }
+        }
+
         RouteCourierTask asyncTask = new RouteCourierTask((new RouteCourierTask.AsyncResponse(){
 
             @Override
@@ -113,34 +130,13 @@ public class MapFragment extends Fragment {
                 Polyline roadOverlay = RoadManager.buildRoadOverlay(road);
                 mapView.getOverlays().add(1, roadOverlay);
 
-                Marker srcMarker = new Marker(mapView);
-                Marker desMarker = new Marker(mapView);
-                srcMarker.setIcon(IconUtils.getMapIcon(getContext(), "src"));
-                desMarker.setIcon(IconUtils.getMapIcon(getContext(), "des"));
-                srcMarker.setPosition(sourceLocation);
-                desMarker.setPosition(destinationLocation);
-                mapView.getOverlays().add(2, srcMarker);
-                mapView.getOverlays().add(3, desMarker);
+                mapView.getOverlays().add(2, MapUtils.createMarker(mapView, getContext(), "src", sourceLocation));
+                mapView.getOverlays().add(3, MapUtils.createMarker(mapView, getContext(), "des", destinationLocation));
                 mapView.invalidate();
             }
         }));
 
         asyncTask.execute(json);
-    }
-
-    private String readJsonAsset(String location){
-        String json = null;
-        try {
-            InputStream is = getActivity().getAssets().open(location);
-            int size = is.available();
-            byte[] buffer = new byte[size];
-            is.read(buffer);
-            is.close();
-            json = new String(buffer, StandardCharsets.UTF_8);
-        } catch (IOException ex) {
-            ex.printStackTrace();
-        }
-        return json;
     }
 
     @Override
@@ -191,14 +187,10 @@ public class MapFragment extends Fragment {
     public class MapLocationListener implements LocationListener {
 
         public void onLocationChanged(Location location) {
-            if (!(location.getLatitude() == currentLocation.getLatitude() && location.getLongitude() == currentLocation.getLongitude())) {
+            if (!(location.getLatitude() == currentLocation.getLatitude() && location.getLongitude() == currentLocation.getLongitude()) || currentLocation == null) {
                 currentLocation = new GeoPoint(location);
-                Marker currentMarker = new Marker(mapView);
-                currentMarker.setIcon(IconUtils.getMapIcon(getContext(), "current"));
-                currentMarker.setPosition(new GeoPoint(currentLocation.getLatitude(), currentLocation.getLongitude()));
-
                 mapView.getOverlays().remove(0);
-                mapView.getOverlays().add(0, currentMarker);
+                mapView.getOverlays().add(0, MapUtils.createMarker(mapView, getContext(), "current", currentLocation));
                 mapView.invalidate();
             }
         }
