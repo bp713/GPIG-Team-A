@@ -18,6 +18,7 @@ import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
 
+import android.view.WindowManager;
 import android.widget.LinearLayout;
 
 import com.gpig.a.tickets.Ticket;
@@ -39,6 +40,9 @@ public class MainActivity extends AppCompatActivity
 
         StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
         StrictMode.setThreadPolicy(policy);
+
+        getWindow().setFlags(WindowManager.LayoutParams.FLAG_SECURE,
+                WindowManager.LayoutParams.FLAG_SECURE);
 
         setContentView(R.layout.activity_main);
         Toolbar toolbar = findViewById(R.id.toolbar);
@@ -128,6 +132,12 @@ public class MainActivity extends AppCompatActivity
     public void onDistressCall(View v){
         //TODO confirm user is in distress?
         //TODO tell server user is in distress
+    }
+
+    @Override
+    public void onStop(){
+        super.onStop();
+        startActivity(getParentActivityIntent());
     }
 
 }
