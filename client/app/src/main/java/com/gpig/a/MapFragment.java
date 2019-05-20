@@ -44,6 +44,7 @@ public class MapFragment extends Fragment {
     private GeoPoint currentLocation = null;
     private GeoPoint sourceLocation = null;
     private GeoPoint destinationLocation = null;
+    private Marker m = null;
     private String TAG = "MapFragment";
 
     public static MapFragment newInstance() {
@@ -86,7 +87,7 @@ public class MapFragment extends Fragment {
         if (ContextCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
             locationManager = (LocationManager) getActivity().getSystemService(Context.LOCATION_SERVICE);
             locationListener = new MapLocationListener();
-            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 10000, 10, locationListener);
+            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, locationListener);
             Location location = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
             if (location != null) {
                 currentLocation = new GeoPoint(location.getLatitude(), location.getLongitude());
@@ -94,10 +95,12 @@ public class MapFragment extends Fragment {
 
             if (currentLocation != null) {
                 mapView.getController().setCenter(currentLocation);
-                mapView.getOverlays().add(0, MapUtils.createMarker(mapView, getContext(), "current", currentLocation));
+                m = MapUtils.createMarker(mapView, getContext(), "current", currentLocation);
+                mapView.getOverlays().add(m);
             }
         }
     }
+
     private void routeCourier(){
 
         RouteCourierTask asyncTask = new RouteCourierTask((new RouteCourierTask.AsyncResponse(){
@@ -109,10 +112,10 @@ public class MapFragment extends Fragment {
                 destinationLocation = (GeoPoint) output[2];
                 mapView.zoomToBoundingBox(road.mBoundingBox, true, 75);
                 Polyline roadOverlay = RoadManager.buildRoadOverlay(road);
-                mapView.getOverlays().add(1, roadOverlay);
+                mapView.getOverlays().add(roadOverlay);
 
-                mapView.getOverlays().add(2, MapUtils.createMarker(mapView, getContext(), "src", sourceLocation));
-                mapView.getOverlays().add(3, MapUtils.createMarker(mapView, getContext(), "des", destinationLocation));
+                mapView.getOverlays().add(MapUtils.createMarker(mapView, getContext(), "src", sourceLocation));
+                mapView.getOverlays().add(MapUtils.createMarker(mapView, getContext(), "des", destinationLocation));
                 mapView.invalidate();
             }
         }));
@@ -194,11 +197,28 @@ public class MapFragment extends Fragment {
     public class MapLocationListener implements LocationListener {
 
         public void onLocationChanged(Location location) {
-            if (!(location.getLatitude() == currentLocation.getLatitude() && location.getLongitude() == currentLocation.getLongitude()) || currentLocation == null) {
-                currentLocation = new GeoPoint(location);
-                mapView.getOverlays().remove(0);
-                mapView.getOverlays().add(0, MapUtils.createMarker(mapView, getContext(), "current", currentLocation));
-                mapView.invalidate();
+            if (location != null) {
+                if (!(location.getLatitude() == currentLocation.getLatitude() && location.getLongitude() == currentLocation.getLongitude()) || currentLocation == null) {
+                    currentLocation = new GeoPoint(location);
+                    if (m != null) {
+                        mapView.getOverlays().remove(m);
+                    }
+                    m = MapUtils.createMarker(mapView, getContext(), "current", currentLocation);
+                    m.setRotation(location.getBearing());
+                    Log.e(TAG, Double.toString(location.getBearing()));
+                    mapView.getOverlays().add(m);
+                    mapView.invalidate();
+                }
+                else {
+                    if (m != null) {
+                        mapView.getOverlays().remove(m);
+                        m.setRotation(location.getBearing());
+                        Log.e(TAG, Double.toString(location.getBearing()));
+                        mapView.getOverlays().add(m);
+                        mapView.invalidate();
+                    }
+
+                }
             }
         }
         public void onProviderDisabled(String provider) {}
