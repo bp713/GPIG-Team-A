@@ -147,6 +147,7 @@ public class LoginActivity extends AppCompatActivity {
                     Toast.makeText(
                             this, "Operation failed\n" + response, Toast.LENGTH_SHORT)
                             .show();
+                    response.getClientDataJSON();//TODO send response to server
                 } else if (requestCode == CustomFIDO2.REQUEST_CODE_REGISTER) {
                     Log.d(TAG, "Received register response from Google Play Services FIDO2 API");
                     AuthenticatorAttestationResponse response =
@@ -158,7 +159,7 @@ public class LoginActivity extends AppCompatActivity {
                                     + Base64.encodeToString(response.getKeyHandle(), Base64.DEFAULT),
                             Toast.LENGTH_SHORT)
                             .show();
-//                    updateRegisterResponseToServer(response);
+//                    updateRegisterResponseToServer(response);//TODO send response to server
                 } else if (requestCode == CustomFIDO2.REQUEST_CODE_SIGN) {
                     Log.d(TAG, "Received sign response from Google Play Services FIDO2 API");
                     AuthenticatorAssertionResponse response =
