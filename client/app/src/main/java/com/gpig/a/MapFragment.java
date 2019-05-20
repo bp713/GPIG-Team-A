@@ -245,6 +245,8 @@ public class MapFragment extends Fragment {
     @Override
     public void onStop(){
         super.onStop();
+        // remove the listener or the app crashes
+        locationManager.removeUpdates(locationListener);
     }
 
     static class RouteCourierTask extends AsyncTask<String, Integer, Object[]> {
