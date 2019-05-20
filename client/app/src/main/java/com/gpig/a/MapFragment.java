@@ -204,13 +204,15 @@ public class MapFragment extends Fragment {
                         mapView.getOverlays().remove(m);
                     }
                     m = MapUtils.createMarker(mapView, getContext(), "current", currentLocation);
-                    m.setRotation(location.getBearing());
-                    Log.e(TAG, Double.toString(location.getBearing()));
+                    if (location.hasBearing()) {
+                        m.setRotation(location.getBearing());
+                        Log.e(TAG, Double.toString(location.getBearing()));
+                    }
                     mapView.getOverlays().add(m);
                     mapView.invalidate();
                 }
                 else {
-                    if (m != null) {
+                    if (m != null || m.getRotation() != location.getBearing() && location.hasBearing()) {
                         mapView.getOverlays().remove(m);
                         m.setRotation(location.getBearing());
                         Log.e(TAG, Double.toString(location.getBearing()));
