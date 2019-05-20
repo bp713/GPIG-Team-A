@@ -2,6 +2,7 @@
 package com.gpig.a;
 
 import android.Manifest;
+import android.app.AlertDialog;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.location.Location;
@@ -98,6 +99,24 @@ public class MapFragment extends Fragment {
         }
     }
     private void routeCourier(){
+
+        RouteCourierTask asyncTask = new RouteCourierTask((new RouteCourierTask.AsyncResponse(){
+
+            @Override
+            public void processFinish(Object[] output){
+                Road road = (Road) output[0];
+                sourceLocation = (GeoPoint) output[1];
+                destinationLocation = (GeoPoint) output[2];
+                mapView.zoomToBoundingBox(road.mBoundingBox, true, 75);
+                Polyline roadOverlay = RoadManager.buildRoadOverlay(road);
+                mapView.getOverlays().add(1, roadOverlay);
+
+                mapView.getOverlays().add(2, MapUtils.createMarker(mapView, getContext(), "src", sourceLocation));
+                mapView.getOverlays().add(3, MapUtils.createMarker(mapView, getContext(), "des", destinationLocation));
+                mapView.invalidate();
+            }
+        }));
+
         String json = null;
         String filename = "Route.json";
         if (StatusUtils.isNetworkAvailable(getActivity())){
@@ -108,35 +127,23 @@ public class MapFragment extends Fragment {
             if (RouteUtils.hasRouteChanged(getActivity(), filename, json)) {
                 FileUtils.writeToInternalStorage(getActivity(), filename, json);
             }
+            asyncTask.execute(json);
         }
         else {
             if (FileUtils.doesFileExist(getActivity(), filename)) {
                 json = FileUtils.readFromInternalStorage(getActivity(), filename);
+                asyncTask.execute(json);
             }
             else {
                 // display a popup saying connect to the internet?
                 Log.e(TAG, "No internet and no route downloaded");
+                AlertDialog.Builder alert = new AlertDialog.Builder(getContext());
+                alert.setTitle("No Route Downloaded");
+                alert.setMessage("Please connect to the internet to download a route");
+                alert.setPositiveButton("OK",null);
+                alert.show();
             }
         }
-
-        RouteCourierTask asyncTask = new RouteCourierTask((new RouteCourierTask.AsyncResponse(){
-
-            @Override
-            public void processFinish(Object[] output){
-                Road road = (Road) output[0];
-                sourceLocation = (GeoPoint) output[1];
-                destinationLocation = (GeoPoint) output[2];
-                mapView.zoomToBoundingBox(road.mBoundingBox, true); // might need to calc this when its split up
-                Polyline roadOverlay = RoadManager.buildRoadOverlay(road);
-                mapView.getOverlays().add(1, roadOverlay);
-
-                mapView.getOverlays().add(2, MapUtils.createMarker(mapView, getContext(), "src", sourceLocation));
-                mapView.getOverlays().add(3, MapUtils.createMarker(mapView, getContext(), "des", destinationLocation));
-                mapView.invalidate();
-            }
-        }));
-
-        asyncTask.execute(json);
     }
 
     @Override
