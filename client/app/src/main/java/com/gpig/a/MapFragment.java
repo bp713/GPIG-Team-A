@@ -40,6 +40,18 @@ import org.osmdroid.views.MapView;
 import org.osmdroid.views.overlay.Marker;
 import org.osmdroid.views.overlay.Polyline;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
+
+import okhttp3.internal.http.StatusLine;
+
 public class MapFragment extends Fragment {
 
     private MapView mapView = null;
@@ -132,9 +144,9 @@ public class MapFragment extends Fragment {
         String json = null;
         String filename = "Route.json";
         if (StatusUtils.isNetworkAvailable(getActivity())) {
-            //connect to the server?
-            //String jString = BonusPackHelper.requestStringFromUrl(url); use this???
-            json = FileUtils.readJsonAsset(getActivity(), "example_route/route3.json");
+
+            json = RouteUtils.getRouteFromUrl("http://192.168.0.14:8000/controller/route");
+
             // if the route is different from the one stored then update it
             if (RouteUtils.hasRouteChanged(getActivity(), filename, json)) {
                 FileUtils.writeToInternalStorage(getActivity(), filename, json);
