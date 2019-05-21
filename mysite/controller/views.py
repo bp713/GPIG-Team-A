@@ -5,7 +5,7 @@ import os
 from django.conf import settings
 import django
 import json
-import controller.Routetest
+import controller.Routetest as rt
 
 def controller(request, controller_id):
     controller = get_object_or_404(Controller, pk=controller_id)
@@ -27,6 +27,6 @@ def routeCalc(request):
     point2 = '%s,%s' %(lang1,long1)
     points = [point1, point2]
     
-    makeroute(Routetest.point, Routetest.key, Routetest.maxtraveltime)
+    rt.makeroute(rt.point, rt.key, rt.maxtraveltime)
 
     
