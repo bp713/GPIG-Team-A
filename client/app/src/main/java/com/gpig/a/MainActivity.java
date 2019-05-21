@@ -1,5 +1,6 @@
 package com.gpig.a;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.os.StrictMode;
 import android.support.annotation.NonNull;
@@ -18,6 +19,7 @@ import android.widget.LinearLayout;
 
 import com.gpig.a.settings.SettingsFragment;
 import com.gpig.a.tickets.Ticket;
+import com.gpig.a.ui.login.LoginActivity;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener, TicketFragment.OnListFragmentInteractionListener {
@@ -155,8 +157,9 @@ public class MainActivity extends AppCompatActivity
     }
 
     @Override
-    public void onStop(){
-        super.onStop();
+    public void onRestart(){
+        super.onRestart();
+        startActivity(new Intent(this, LoginActivity.class));
         finish();
     }
 
