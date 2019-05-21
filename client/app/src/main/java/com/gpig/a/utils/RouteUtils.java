@@ -28,7 +28,7 @@ public final class RouteUtils {
         try {
             URL url = new URL(serverUrl);
             HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
-            Log.e(TAG, urlConnection.getResponseMessage());
+            urlConnection.setConnectTimeout(3000);
             try {
                 InputStream in = urlConnection.getInputStream();
                 BufferedReader reader = new BufferedReader(new InputStreamReader(in));

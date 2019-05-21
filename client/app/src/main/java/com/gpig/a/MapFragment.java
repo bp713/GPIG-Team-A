@@ -40,18 +40,6 @@ import org.osmdroid.views.MapView;
 import org.osmdroid.views.overlay.Marker;
 import org.osmdroid.views.overlay.Polyline;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedReader;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.nio.charset.StandardCharsets;
-
-import okhttp3.internal.http.StatusLine;
-
 public class MapFragment extends Fragment {
 
     private MapView mapView = null;
@@ -64,6 +52,11 @@ public class MapFragment extends Fragment {
     private GeoPoint destinationLocation = null;
     private int angle = 0;
     private Marker m = null;
+
+    private String filename = "Route.json";
+    private String json = null;
+    private RouteCourierTask routeCourierTask = null;
+    private RouteFromUrlTask routeFromUrlTask = null;
     private String TAG = "MapFragment";
 
     public static MapFragment newInstance() {
@@ -124,7 +117,7 @@ public class MapFragment extends Fragment {
 
     private void routeCourier() {
 
-        RouteCourierTask asyncTask = new RouteCourierTask((new RouteCourierTask.AsyncResponse() {
+        routeCourierTask = new RouteCourierTask((new RouteCourierTask.AsyncResponse() {
 
             @Override
             public void processFinish(Object[] output) {
@@ -141,26 +134,49 @@ public class MapFragment extends Fragment {
             }
         }));
 
-        String json = null;
-        String filename = "Route.json";
         if (StatusUtils.isNetworkAvailable(getActivity())) {
 
-            json = RouteUtils.getRouteFromUrl("http://192.168.0.14:8000/controller/route");
+            routeFromUrlTask = new RouteFromUrlTask(new RouteFromUrlTask.AsyncResponse() {
 
-            // if the route is different from the one stored then update it
-            if (RouteUtils.hasRouteChanged(getActivity(), filename, json)) {
-                FileUtils.writeToInternalStorage(getActivity(), filename, json);
-            }
-            asyncTask.execute(json);
-        } else {
+                @Override
+                public void processFinish(String output) {
+                    json = output;
+
+                    if (json == null || json.isEmpty()){
+                        if (FileUtils.doesFileExist(getActivity(), filename)){
+                            json = FileUtils.readFromInternalStorage(getActivity(), filename);
+                            routeCourierTask.execute(json);
+                        }
+                        else {
+                            Log.e(TAG, "Failed to connect to server and no route downloaded");
+                            AlertDialog.Builder alert = new AlertDialog.Builder(getContext());
+                            alert.setTitle("Failed to connect to server");
+                            alert.setMessage("Please try to connect to the server to download a route");
+                            alert.setPositiveButton("OK", null);
+                            alert.show();
+                        }
+                    }
+                    else {
+                        // if the route is different from the one stored then update it
+                        if (RouteUtils.hasRouteChanged(getActivity(), filename, json)) {
+                            FileUtils.writeToInternalStorage(getActivity(), filename, json);
+                        }
+                        routeCourierTask.execute(json);
+                    }
+                }
+            });
+
+            routeFromUrlTask.execute("http://192.168.0.19:8000/controller/route");
+        }
+        else {
             if (FileUtils.doesFileExist(getActivity(), filename)) {
                 json = FileUtils.readFromInternalStorage(getActivity(), filename);
-                asyncTask.execute(json);
+                routeCourierTask.execute(json);
             } else {
                 // display a popup saying connect to the internet?
                 Log.e(TAG, "No internet and no route downloaded");
                 AlertDialog.Builder alert = new AlertDialog.Builder(getContext());
-                alert.setTitle("No Route Downloaded");
+                alert.setTitle("No route downloaded");
                 alert.setMessage("Please connect to the internet to download a route");
                 alert.setPositiveButton("OK", null);
                 alert.show();
@@ -288,6 +304,29 @@ public class MapFragment extends Fragment {
 
         @Override
         protected void onPostExecute(Object[] result) {
+            delegate.processFinish(result);
+        }
+    }
+
+    static class RouteFromUrlTask extends AsyncTask<String, Integer, String> {
+
+        public interface AsyncResponse {
+            void processFinish(String output);
+        }
+
+        private AsyncResponse delegate = null;
+
+        private RouteFromUrlTask(AsyncResponse delegate){
+            this.delegate = delegate;
+        }
+
+        @Override
+        protected String doInBackground(String... params) {
+            return RouteUtils.getRouteFromUrl(params[0]);
+        }
+
+        @Override
+        protected void onPostExecute(String result) {
             delegate.processFinish(result);
         }
     }
