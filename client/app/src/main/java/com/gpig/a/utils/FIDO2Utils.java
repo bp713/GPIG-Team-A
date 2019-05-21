@@ -1,4 +1,4 @@
-package com.gpig.a.fido;
+package com.gpig.a.utils;
 
 import android.app.Activity;
 import android.content.IntentSender;
@@ -24,7 +24,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class CustomFIDO2 {
+
+public final class FIDO2Utils {
 
     public static final int REQUEST_CODE_REGISTER = 0;
     public static final int REQUEST_CODE_SIGN = 1;
@@ -34,7 +35,7 @@ public class CustomFIDO2 {
     private final Map<String, String> sessionIds = new HashMap<>();
 
     private final Fido2ApiClient mfido2ApiClient;
-    public CustomFIDO2(Activity activity){
+    public FIDO2Utils(Activity activity){
         mfido2ApiClient = Fido.getFido2ApiClient(activity);
         this.activity = activity;
     }
@@ -59,7 +60,7 @@ public class CustomFIDO2 {
         }
         builder.setChallenge(challenge);
 
-        builder.setRequestId(CustomFIDO2.REQUEST_CODE_SIGN);
+        builder.setRequestId(FIDO2Utils.REQUEST_CODE_SIGN);
         //TODO add FIDO2 keys
         List<String> allowedKeys = new ArrayList<>();
         List<PublicKeyCredentialDescriptor> descriptors = new ArrayList<>();
