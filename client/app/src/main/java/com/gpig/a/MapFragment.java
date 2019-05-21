@@ -2,8 +2,13 @@
 package com.gpig.a;
 
 import android.Manifest;
+import android.app.AlertDialog;
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
@@ -36,13 +41,17 @@ import org.osmdroid.views.overlay.Marker;
 import org.osmdroid.views.overlay.Polyline;
 
 public class MapFragment extends Fragment {
-    
+
     private MapView mapView = null;
     private MapLocationListener locationListener = null;
     private LocationManager locationManager = null;
+    private SensorEventListener sensorEventListener = null;
+    private SensorManager sensorManager = null;
     private GeoPoint currentLocation = null;
     private GeoPoint sourceLocation = null;
     private GeoPoint destinationLocation = null;
+    private int angle = 0;
+    private Marker m = null;
     private String TAG = "MapFragment";
 
     public static MapFragment newInstance() {
@@ -81,26 +90,48 @@ public class MapFragment extends Fragment {
 
     }
 
-    private void setCurrentLocation(){
+    private void setCurrentLocation() {
         if (ContextCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
             locationManager = (LocationManager) getActivity().getSystemService(Context.LOCATION_SERVICE);
             locationListener = new MapLocationListener();
-            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 10000, 10, locationListener);
+            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 2000, 0, locationListener);
             Location location = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
             if (location != null) {
                 currentLocation = new GeoPoint(location.getLatitude(), location.getLongitude());
             }
-
+            sensorEventListener = new MapSensorListener();
+            sensorManager = (SensorManager) getActivity().getSystemService(Context.SENSOR_SERVICE);
+            sensorManager.registerListener(sensorEventListener, sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER), SensorManager.SENSOR_DELAY_UI);
             if (currentLocation != null) {
                 mapView.getController().setCenter(currentLocation);
-                mapView.getOverlays().add(0, MapUtils.createMarker(mapView, getContext(), "current", currentLocation));
+                m = MapUtils.createMarker(mapView, getContext(), "current", currentLocation);
+                mapView.getOverlays().add(m);
             }
         }
     }
-    private void routeCourier(){
+
+    private void routeCourier() {
+
+        RouteCourierTask asyncTask = new RouteCourierTask((new RouteCourierTask.AsyncResponse() {
+
+            @Override
+            public void processFinish(Object[] output) {
+                Road road = (Road) output[0];
+                sourceLocation = (GeoPoint) output[1];
+                destinationLocation = (GeoPoint) output[2];
+                mapView.zoomToBoundingBox(road.mBoundingBox, true, 75);
+                Polyline roadOverlay = RoadManager.buildRoadOverlay(road);
+                mapView.getOverlays().add(roadOverlay);
+
+                mapView.getOverlays().add(MapUtils.createMarker(mapView, getContext(), "src", sourceLocation));
+                mapView.getOverlays().add(MapUtils.createMarker(mapView, getContext(), "des", destinationLocation));
+                mapView.invalidate();
+            }
+        }));
+
         String json = null;
         String filename = "Route.json";
-        if (StatusUtils.isNetworkAvailable(getActivity())){
+        if (StatusUtils.isNetworkAvailable(getActivity())) {
             //connect to the server?
             //String jString = BonusPackHelper.requestStringFromUrl(url); use this???
             json = FileUtils.readJsonAsset(getActivity(), "example_route/route3.json");
@@ -108,46 +139,31 @@ public class MapFragment extends Fragment {
             if (RouteUtils.hasRouteChanged(getActivity(), filename, json)) {
                 FileUtils.writeToInternalStorage(getActivity(), filename, json);
             }
-        }
-        else {
+            asyncTask.execute(json);
+        } else {
             if (FileUtils.doesFileExist(getActivity(), filename)) {
                 json = FileUtils.readFromInternalStorage(getActivity(), filename);
-            }
-            else {
+                asyncTask.execute(json);
+            } else {
                 // display a popup saying connect to the internet?
                 Log.e(TAG, "No internet and no route downloaded");
+                AlertDialog.Builder alert = new AlertDialog.Builder(getContext());
+                alert.setTitle("No Route Downloaded");
+                alert.setMessage("Please connect to the internet to download a route");
+                alert.setPositiveButton("OK", null);
+                alert.show();
             }
         }
-
-        RouteCourierTask asyncTask = new RouteCourierTask((new RouteCourierTask.AsyncResponse(){
-
-            @Override
-            public void processFinish(Object[] output){
-                Road road = (Road) output[0];
-                sourceLocation = (GeoPoint) output[1];
-                destinationLocation = (GeoPoint) output[2];
-                mapView.zoomToBoundingBox(road.mBoundingBox, true); // might need to calc this when its split up
-                Polyline roadOverlay = RoadManager.buildRoadOverlay(road);
-                mapView.getOverlays().add(1, roadOverlay);
-
-                mapView.getOverlays().add(2, MapUtils.createMarker(mapView, getContext(), "src", sourceLocation));
-                mapView.getOverlays().add(3, MapUtils.createMarker(mapView, getContext(), "des", destinationLocation));
-                mapView.invalidate();
-            }
-        }));
-
-        asyncTask.execute(json);
     }
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         // if the permissions have changed then get the location
-        if (requestCode == 1){
+        if (requestCode == 1) {
             setCurrentLocation();
             routeCourier();
-        }
-        else {
+        } else {
             Log.e(TAG, "Error");
         }
     }
@@ -164,7 +180,7 @@ public class MapFragment extends Fragment {
     }
 
 
-    private void requestAllPermissions(){
+    private void requestAllPermissions() {
         int PERMISSION_ALL = 1;
         String[] PERMISSIONS = {
                 android.Manifest.permission.ACCESS_NETWORK_STATE,
@@ -175,10 +191,9 @@ public class MapFragment extends Fragment {
                 android.Manifest.permission.ACCESS_WIFI_STATE
         };
 
-        if(!hasPermissions(getContext(), PERMISSIONS)){
+        if (!hasPermissions(getContext(), PERMISSIONS)) {
             requestPermissions(PERMISSIONS, PERMISSION_ALL);
-        }
-        else{
+        } else {
             setCurrentLocation();
             routeCourier();
         }
@@ -187,35 +202,57 @@ public class MapFragment extends Fragment {
     public class MapLocationListener implements LocationListener {
 
         public void onLocationChanged(Location location) {
-            if (!(location.getLatitude() == currentLocation.getLatitude() && location.getLongitude() == currentLocation.getLongitude()) || currentLocation == null) {
-                currentLocation = new GeoPoint(location);
-                mapView.getOverlays().remove(0);
-                mapView.getOverlays().add(0, MapUtils.createMarker(mapView, getContext(), "current", currentLocation));
-                mapView.invalidate();
+            if (location != null) {
+                if (!(location.getLatitude() == currentLocation.getLatitude() && location.getLongitude() == currentLocation.getLongitude()) || currentLocation == null) {
+                    currentLocation = new GeoPoint(location);
+                    if (m != null) {
+                        mapView.getOverlays().remove(m);
+                    }
+                    m = MapUtils.createMarker(mapView, getContext(), "current", currentLocation);
+                    mapView.getOverlays().add(m);
+                    mapView.invalidate();
+                }
             }
         }
+
         public void onProviderDisabled(String provider) {}
         public void onProviderEnabled(String provider) {}
         public void onStatusChanged(String provider, int status, Bundle extras) {}
     }
 
+    public class MapSensorListener implements SensorEventListener {
+
+        @Override
+        public void onSensorChanged(SensorEvent event) {
+            if (event.sensor.getType() != Sensor.TYPE_ACCELEROMETER)
+                return;
+
+            if (m!= null) {
+                double aX = event.values[0];
+                double aY = event.values[1];
+                int sensorAngle = (int) Math.round(Math.atan2(aX, aY) / (Math.PI / 180));
+                // ensure angle must change by 5 degrees to reduce oscillating
+                if (sensorAngle != angle && (sensorAngle > angle + 5 || sensorAngle < angle - 5)) {
+                    angle = sensorAngle;
+                    m.setRotation(Math.round(angle));
+                    mapView.invalidate();
+                }
+            }
+        }
+
+        @Override
+        public void onAccuracyChanged(Sensor s, int accuracy) {}
+    }
     public void onCenterCall(View v){
         mapView.getController().animateTo(currentLocation);
     }
 
     @Override
-    public void onPause(){
-        super.onPause();
-    }
-
-    @Override
-    public void onResume(){
-        super.onResume();
-    }
-
-    @Override
     public void onStop(){
         super.onStop();
+        // remove the listeners or the app crashes
+        locationManager.removeUpdates(locationListener);
+        sensorManager.unregisterListener(sensorEventListener);
     }
 
     static class RouteCourierTask extends AsyncTask<String, Integer, Object[]> {

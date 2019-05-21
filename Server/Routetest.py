@@ -30,27 +30,27 @@ alternative_route_max_paths = 56 # int | If `algorithm=alternative_route` this p
 alternative_route_max_weight_factor = 56 # int | If `algorithm=alternative_route` this parameter sets the factor by which the alternatives routes can be longer than the optimal route. Increasing can lead to worse alternatives. (optional)
 alternative_route_max_share_factor = 56 # int | If `algorithm=alternative_route` this parameter specifies how much alternatives routes can have maximum in common with the optimal route. Increasing can lead to worse alternatives. (optional)
 avoid = 'avoid_example' # str | comma separate list to avoid certain roads. You can avoid motorway, ferry, tunnel or track (optional)
+maxtraveltime=3600000 #currently one hour should probably change
+def makeroute(point,key,maxtraveltime,points_encoded=False):
+	coordinates = []
+	try:
+	    # Routing Request
+	    #api_response = api_instance.route_get(point, points_encoded, key, locale=locale, instructions=instructions, vehicle=vehicle, elevation=elevation, calc_points=calc_points, point_hint=point_hint, ch_disable=ch_disable, weighting=weighting, edge_traversal=edge_traversal, algorithm=algorithm, heading=heading, heading_penalty=heading_penalty, pass_through=pass_through, details=details, round_trip_distance=round_trip_distance, round_trip_seed=round_trip_seed, alternative_route_max_paths=alternative_route_max_paths, alternative_route_max_weight_factor=alternative_route_max_weight_factor, alternative_route_max_share_factor=alternative_route_max_share_factor, avoid=avoid)
+	    api_response = api_instance.route_get(point, points_encoded, key)
+	    #pprint(api_response)
+	    coordinates.append(point[0])
+	    coordinates += break_up_route(api_response.to_dict(),maxtraveltime)
+	    coordinates.append(point[-1])
+	    #print(coordinates)
+	    for i in range(0,len(coordinates)-1):
+	    	api_response2 = api_instance.route_get([coordinates[i],coordinates[i+1]],points_encoded,key)
+	    	f = open('route'+str(i)+'.txt','w+')
+	    	f.write(json.dumps(api_response2.to_dict()))
+	    	f.close()
 
-maxtraveltime=3600000
-coordinates = []
-try:
-    # Routing Request
-    #api_response = api_instance.route_get(point, points_encoded, key, locale=locale, instructions=instructions, vehicle=vehicle, elevation=elevation, calc_points=calc_points, point_hint=point_hint, ch_disable=ch_disable, weighting=weighting, edge_traversal=edge_traversal, algorithm=algorithm, heading=heading, heading_penalty=heading_penalty, pass_through=pass_through, details=details, round_trip_distance=round_trip_distance, round_trip_seed=round_trip_seed, alternative_route_max_paths=alternative_route_max_paths, alternative_route_max_weight_factor=alternative_route_max_weight_factor, alternative_route_max_share_factor=alternative_route_max_share_factor, avoid=avoid)
-    api_response = api_instance.route_get(point, points_encoded, key,alternative_route_max_weight_factor=alternative_route_max_weight_factor, alternative_route_max_share_factor=alternative_route_max_share_factor,ch_disable=ch_disable)
-    #pprint(api_response)
-    coordinates.append(point[0])
-    coordinates += break_up_route(api_response.to_dict(),maxtraveltime)
-    coordinates.append(point[-1])
-    #print(coordinates)
-    for i in range(0,len(coordinates)-1):
-    	api_response2 = api_instance.route_get([coordinates[i],coordinates[i+1]],points_encoded,key)
-    	f = open('route'+str(i)+'.txt','w+')
-    	f.write(json.dumps(api_response2.to_dict()))
-    	f.close()
-
-except ApiException as e:
-    print("Exception when calling RoutingApi->route_get: %s\n" % e)
-
+	except ApiException as e:
+	    print("Exception when calling RoutingApi->route_get: %s\n" % e)
+makeroute(point,key,maxtraveltime)
 
 
 
