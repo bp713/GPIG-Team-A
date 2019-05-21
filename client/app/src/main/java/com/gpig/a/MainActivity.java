@@ -19,7 +19,6 @@ import android.widget.LinearLayout;
 
 import com.gpig.a.settings.SettingsFragment;
 import com.gpig.a.tickets.Ticket;
-import com.gpig.a.ui.login.LoginActivity;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener, TicketFragment.OnListFragmentInteractionListener {
