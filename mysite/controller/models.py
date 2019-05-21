@@ -10,10 +10,5 @@ class Controller(models.Model):
 class Courier(models.Model):
     controller = models.ForeignKey(Controller, on_delete=models.CASCADE)
     location = models.CharField(max_length = 50, default = '')
-    
-    #required for auth:
-    email = models.CharField(max_length = 50, default = '')
-    cred_id = models.ByteField()
-    cred_pub_key = models.ByteField()
-    registration_challenge = models.ByteField()
-    authentication_challenge = models.ByteField()
+    longitude = models.FloatField(default=0)
+    latitude = models.FloatField(default=0)
