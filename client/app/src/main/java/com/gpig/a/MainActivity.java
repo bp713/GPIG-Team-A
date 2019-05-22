@@ -47,7 +47,6 @@ public class MainActivity extends AppCompatActivity
         toggle.syncState();
         navigationView.setNavigationItemSelectedListener(this);
 
-        //setContentView(R.layout.activity_maps);
         // Obtain the SupportMapFragment and get notified when the fragment_map is ready to be used.
         mapFragment = new MapFragment();
         final FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
@@ -56,7 +55,7 @@ public class MainActivity extends AppCompatActivity
         ft.addToBackStack(null);
         ft.commit();
 
-
+        navigationView.getMenu().getItem(0).setChecked(true);
     }
 
     @Override
