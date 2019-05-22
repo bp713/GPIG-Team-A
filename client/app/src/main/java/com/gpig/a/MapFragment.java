@@ -50,8 +50,10 @@ public class MapFragment extends Fragment {
     private GeoPoint currentLocation = null;
     private GeoPoint sourceLocation = null;
     private GeoPoint destinationLocation = null;
-    private int angle = 0;
     private Marker m = null;
+
+    private float[] gravity = null;
+    private float[] geomagnetic = null;
 
     private String filename = "Route.json";
     private String json = null;
@@ -107,6 +109,7 @@ public class MapFragment extends Fragment {
             sensorEventListener = new MapSensorListener();
             sensorManager = (SensorManager) getActivity().getSystemService(Context.SENSOR_SERVICE);
             sensorManager.registerListener(sensorEventListener, sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER), SensorManager.SENSOR_DELAY_UI);
+            sensorManager.registerListener(sensorEventListener, sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD), SensorManager.SENSOR_DELAY_UI);
             if (currentLocation != null) {
                 mapView.getController().setCenter(currentLocation);
                 m = MapUtils.createMarker(mapView, getContext(), "current", currentLocation);
@@ -252,18 +255,25 @@ public class MapFragment extends Fragment {
 
         @Override
         public void onSensorChanged(SensorEvent event) {
-            if (event.sensor.getType() != Sensor.TYPE_ACCELEROMETER)
-                return;
 
-            if (m!= null) {
-                double aX = event.values[0];
-                double aY = event.values[1];
-                int sensorAngle = (int) Math.round(Math.atan2(aX, aY) / (Math.PI / 180));
-                // ensure angle must change by 5 degrees to reduce oscillating
-                if (sensorAngle != angle && (sensorAngle > angle + 5 || sensorAngle < angle - 5)) {
-                    angle = sensorAngle;
-                    m.setRotation(Math.round(angle));
-                    mapView.invalidate();
+            if (event.sensor.getType() == Sensor.TYPE_ACCELEROMETER) {gravity = event.values;}
+            if (event.sensor.getType() == Sensor.TYPE_MAGNETIC_FIELD) {geomagnetic = event.values;}
+
+            if (gravity != null && geomagnetic != null) {
+                float R[] = new float[9];
+                float I[] = new float[9];
+                boolean success = SensorManager.getRotationMatrix(R, I, gravity, geomagnetic);
+                if (success) {
+                    float orientation[] = new float[3];
+                    SensorManager.getOrientation(R, orientation);
+                    float azimut = orientation[0]; // orientation contains: azimut, pitch and roll
+                    if (m!= null){
+                        float angle = (float) Math.toDegrees(azimut);
+                        if (angle > m.getRotation() + 5 || angle < m.getRotation() - 5 ) {
+                            m.setRotation(angle);
+                            mapView.invalidate();
+                        }
+                    }
                 }
             }
         }
