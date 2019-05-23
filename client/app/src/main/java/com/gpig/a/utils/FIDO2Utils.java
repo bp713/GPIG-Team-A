@@ -3,20 +3,36 @@ package com.gpig.a.utils;
 import android.app.Activity;
 import android.content.IntentSender;
 import android.os.Build;
+import android.util.Base64;
 import android.util.Log;
 
 import com.google.android.gms.fido.Fido;
 import com.google.android.gms.fido.fido2.Fido2ApiClient;
 import com.google.android.gms.fido.fido2.Fido2PendingIntent;
+import com.google.android.gms.fido.fido2.api.common.Attachment;
+import com.google.android.gms.fido.fido2.api.common.AuthenticationExtensions;
+import com.google.android.gms.fido.fido2.api.common.AuthenticatorSelectionCriteria;
+import com.google.android.gms.fido.fido2.api.common.FidoAppIdExtension;
 import com.google.android.gms.fido.fido2.api.common.PublicKeyCredentialCreationOptions;
 import com.google.android.gms.fido.fido2.api.common.PublicKeyCredentialDescriptor;
 import com.google.android.gms.fido.fido2.api.common.PublicKeyCredentialParameters;
 import com.google.android.gms.fido.fido2.api.common.PublicKeyCredentialRequestOptions;
 import com.google.android.gms.fido.fido2.api.common.PublicKeyCredentialRpEntity;
+import com.google.android.gms.fido.fido2.api.common.PublicKeyCredentialType;
 import com.google.android.gms.fido.fido2.api.common.PublicKeyCredentialUserEntity;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
+import com.gpig.a.settings.Settings;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.util.ArrayList;
@@ -44,7 +60,7 @@ public final class FIDO2Utils {
         PublicKeyCredentialRequestOptions.Builder builder =
                 new PublicKeyCredentialRequestOptions.Builder();
 
-        builder.setRpId("com.gpig.a");
+        builder.setRpId("");//TODO from server
 
         byte[] challenge = new byte[20];
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -105,60 +121,107 @@ public final class FIDO2Utils {
                 });
     }
 
-    public void register(){
-        //TODO get options off server
-        PublicKeyCredentialCreationOptions.Builder builder =
-                new PublicKeyCredentialCreationOptions.Builder();
-        // Parse challenge
-        builder.setChallenge("".getBytes());
 
-        // Parse RP
-        String rpId = "";
-        String rpName = "";
-        String rpIcon = null;
-        PublicKeyCredentialRpEntity entity = new PublicKeyCredentialRpEntity(rpId, rpName, rpIcon);
-        builder.setRp(entity);
+    private static String getStringFromUrl(String serverUrl){
+        StringBuilder result = new StringBuilder();
+        try {
+            URL url = new URL(serverUrl);
+            HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
+            urlConnection.setConnectTimeout(3000);
+            try {
+                InputStream in = urlConnection.getInputStream();
+                BufferedReader reader = new BufferedReader(new InputStreamReader(in));
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    result.append(line);
+                }
+                in.close();
+                reader.close();
+            } finally {
+                urlConnection.disconnect();
+            }
+        }
+        catch(Exception ex){
+            ex.printStackTrace();
+            Log.e(TAG, ex.toString());
+        }
 
-        // Parse user
-        String displayName = "";//TODO use server values
-        PublicKeyCredentialUserEntity userEntity =
-                new PublicKeyCredentialUserEntity(
-                        displayName.getBytes() /* id */,//TODO use server values
-                        displayName /* name */,//TODO use server values
-                        null /* icon */,//TODO use server values
-                        displayName);
-        builder.setUser(userEntity);
+        return result.toString();
+    }
 
-        // Parse parameters
-        List<PublicKeyCredentialParameters> parameters = new ArrayList<>();
-        PublicKeyCredentialParameters parameter =
-                new PublicKeyCredentialParameters("public-key", -7);//TODO use server values
-        parameters.add(parameter);
-        builder.setParameters(parameters);
+    public void register(String email){
+        String serverOptions = getStringFromUrl("http://" + Settings.ServerIP + ":" + Settings.ServerPort + "/authentication/getRegistrationOptions/?courier_email=" + email);
+        JSONObject options;
+        try {
+            options = new JSONObject(serverOptions);
+            PublicKeyCredentialCreationOptions.Builder builder =
+                    new PublicKeyCredentialCreationOptions.Builder();
+            // Parse challenge
+            builder.setChallenge(Base64.decode(options.getString("challenge"), Base64.DEFAULT));
 
-        // Parse timeout
-        builder.setTimeoutSeconds(60000d);//TODO use server values
+            // Parse RP
+            JSONObject rpObj =  options.getJSONObject("rp");
+            String rpId = rpObj.getString("id");
+            String rpName = rpObj.getString("name");
+            String rpIcon = null;
+            PublicKeyCredentialRpEntity entity = new PublicKeyCredentialRpEntity(rpId, rpName, rpIcon);
+            builder.setRp(entity);
 
-        // Parse exclude list
-        List<PublicKeyCredentialDescriptor> descriptors = new ArrayList<>();
-//        descriptors.add(
-//                new PublicKeyCredentialDescriptor(
-//                                                PublicKeyCredentialType.PUBLIC_KEY.toString(),//TODO use server pub keys
-//                                                Base64.decode(k, Base64.URL_SAFE),//TODO use server pub keys
-//                                                /* transports= */ null));
-        builder.setExcludeList(descriptors);
+            // Parse user
+            JSONObject userObj = options.getJSONObject("user");
+            String displayName = userObj.getString("displayName");//this is not implemented on server so returns dummy value
+            PublicKeyCredentialUserEntity userEntity =
+                    new PublicKeyCredentialUserEntity(
+                            Base64.decode(userObj.getString("id"), Base64.DEFAULT),
+                            userObj.getString("name"),
+                            userObj.getString("icon"),
+                            displayName);
+            builder.setUser(userEntity);
 
-//        AuthenticatorSelectionCriteria.Builder criteria =
-//                new AuthenticatorSelectionCriteria.Builder();
-//        if (registerRequestJson.has(KEY_ATTACHMENT)) {
-//            criteria.setAttachment(
-//                    Attachment.fromString(registerRequestJson.getString(KEY_ATTACHMENT)));
-//        }
-//        builder.setAuthenticatorSelection(criteria.build());
-//        builder.setAttestationConveyancePreference(); //TODO from server
-//        builder.setAuthenticationExtensions() //TODO from server
-        PublicKeyCredentialCreationOptions pko = builder.build();
-        sendRegisterRequestToClient(pko);
+            // Parse parameters
+            JSONArray pubKeyCredParams = options.getJSONArray("pubKeyCredParams");
+            List<PublicKeyCredentialParameters> parameters = new ArrayList<>();
+            for(int i = 0; i < pubKeyCredParams.length(); i++) {
+                JSONObject pubKeyCredParam = pubKeyCredParams.getJSONObject(i);
+                PublicKeyCredentialParameters parameter =
+                        new PublicKeyCredentialParameters(pubKeyCredParam.getString("type"), pubKeyCredParam.getInt("alg"));
+                parameters.add(parameter);
+            }
+            builder.setParameters(parameters);
+
+            // Parse timeout
+            builder.setTimeoutSeconds((double) (options.getInt("timeout")));
+
+            // Parse exclude list
+            JSONArray excludedKeys = options.getJSONArray("excludeCredentials");
+            List<PublicKeyCredentialDescriptor> descriptors = new ArrayList<>();//TODO check this with a functioning server (don't think ours supports it)
+            for(int i = 0; i < excludedKeys.length(); i++) {
+                PublicKeyCredentialDescriptor publicKeyCredentialDescriptor = new PublicKeyCredentialDescriptor(
+                        PublicKeyCredentialType.PUBLIC_KEY.toString(),
+                        Base64.decode(excludedKeys.getString(i), Base64.URL_SAFE),
+                        /* transports= */ null);
+                descriptors.add(publicKeyCredentialDescriptor);
+            }
+            builder.setExcludeList(descriptors);
+
+            AuthenticatorSelectionCriteria.Builder criteria =
+                    new AuthenticatorSelectionCriteria.Builder();
+            if (options.has("attachment")) {
+                criteria.setAttachment(
+                        Attachment.fromString(options.getString("attachment")));
+            }
+            builder.setAuthenticatorSelection(criteria.build());
+
+//            AuthenticationExtensions.Builder extensions = new AuthenticationExtensions.Builder(); //TODO extension loc:true is hardcoded into server why? do we need it?
+//            extensions.setFido2Extension(new FidoAppIdExtension("loc"));
+//            builder.setAuthenticationExtensions(extensions.build());
+            PublicKeyCredentialCreationOptions pko = builder.build();
+            sendRegisterRequestToClient(pko);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        } catch (Attachment.UnsupportedAttachmentException e) {
+            e.printStackTrace();
+        }
     }
 
     private void sendRegisterRequestToClient(PublicKeyCredentialCreationOptions options) {
@@ -175,9 +238,11 @@ public final class FIDO2Utils {
                             } catch (IntentSender.SendIntentException e) {
                                 Log.e(TAG, "Error launching pending intent for register request", e);
                             }
+                        }else{
+                            Log.i(TAG, "Activity cant launch intent!");
                         }
                     }
                 });
-}
+    }
 
 }

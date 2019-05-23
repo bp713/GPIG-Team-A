@@ -14,12 +14,9 @@ import com.gpig.a.utils.BiometricUtils;
 
 public class LoginActivity extends AppCompatActivity implements View.OnClickListener {
 
-    private String username;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        username = getIntent().getStringExtra("username");
         setContentView(R.layout.activity_login);
         Button b = findViewById(R.id.login_button);
         b.setOnClickListener(this);

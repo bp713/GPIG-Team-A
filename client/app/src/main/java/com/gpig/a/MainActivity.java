@@ -11,25 +11,35 @@ import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Base64;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.LinearLayout;
+import android.widget.Toast;
 
+import com.google.android.gms.fido.Fido;
+import com.google.android.gms.fido.fido2.api.common.AuthenticatorAssertionResponse;
+import com.google.android.gms.fido.fido2.api.common.AuthenticatorAttestationResponse;
+import com.google.android.gms.fido.fido2.api.common.AuthenticatorErrorResponse;
 import com.gpig.a.settings.Settings;
 import com.gpig.a.settings.SettingsFragment;
 import com.gpig.a.tickets.Ticket;
+import com.gpig.a.utils.FIDO2Utils;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener, TicketFragment.OnListFragmentInteractionListener {
 
+    public static String username;
     private MapFragment mapFragment;
     private final String TAG = "MainActivity";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        username = getIntent().getStringExtra("username");
 
         StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
         StrictMode.setThreadPolicy(policy);
@@ -165,4 +175,62 @@ public class MainActivity extends AppCompatActivity
         finish();
     }
 
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        switch (resultCode) {
+            case RESULT_OK:
+                if (data.hasExtra(Fido.FIDO2_KEY_ERROR_EXTRA)) {
+                    Log.d(TAG, "Received error response from Google Play Services FIDO2 API");
+                    AuthenticatorErrorResponse response =
+                            AuthenticatorErrorResponse.deserializeFromBytes(
+                                    data.getByteArrayExtra(Fido.FIDO2_KEY_ERROR_EXTRA));
+                    Toast.makeText(
+                            this, "Operation failed\n" + response.getErrorMessage(), Toast.LENGTH_SHORT)
+                            .show();
+                    Log.d(TAG, "Received error: " + response.getErrorMessage());
+                    Log.d(TAG, "Received error: " + response.getErrorCode());
+                    Log.d(TAG, "Received error: " + response.getErrorCodeAsInt());
+                } else if (requestCode == FIDO2Utils.REQUEST_CODE_REGISTER) {
+                    Log.d(TAG, "Received register response from Google Play Services FIDO2 API");
+                    AuthenticatorAttestationResponse response =
+                            AuthenticatorAttestationResponse.deserializeFromBytes(
+                                    data.getByteArrayExtra(Fido.FIDO2_KEY_RESPONSE_EXTRA));
+                    Toast.makeText(
+                            this,
+                            "Registration key handle:\n"
+                                    + Base64.encode(response.getKeyHandle(), Base64.DEFAULT),
+                            Toast.LENGTH_SHORT)
+                            .show();
+//                    updateRegisterResponseToServer(response);
+                } else if (requestCode == FIDO2Utils.REQUEST_CODE_SIGN) {
+                    Log.d(TAG, "Received sign response from Google Play Services FIDO2 API");
+                    AuthenticatorAssertionResponse response =
+                            AuthenticatorAssertionResponse.deserializeFromBytes(
+                                    data.getByteArrayExtra(Fido.FIDO2_KEY_RESPONSE_EXTRA));
+                    Toast.makeText(
+                            this,
+                            "Sign key handle:\n" + Base64.encode(response.getKeyHandle(), Base64.DEFAULT),
+                            Toast.LENGTH_SHORT)
+                            .show();
+//                    updateSignResponseToServer(response);
+                }
+                break;
+
+            case RESULT_CANCELED:
+                Toast.makeText(this, "Operation is cancelled", Toast.LENGTH_SHORT).show();
+                break;
+
+            default:
+                Toast.makeText(
+                        this,
+                        "Operation failed, with resultCode " + resultCode,
+                        Toast.LENGTH_SHORT)
+                        .show();
+                break;
+        }
+    }
+    
 }
