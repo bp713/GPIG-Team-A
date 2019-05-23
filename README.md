@@ -22,4 +22,4 @@ requires:
  - django
    - install via `pip3 install django --user`
  - pywarp
-   - install via `pip3 install pywarp --user`
+   - install via `pip3 install -U https://github.com/pyauth/pywarp/archive/master.zip --user`
