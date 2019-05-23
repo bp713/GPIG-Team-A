@@ -11,6 +11,14 @@
         android:layout_height="match_parent"
         android:orientation="vertical">
 
+        <EditText
+            android:id="@+id/username"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:ems="10"
+            android:hint="@string/login_username_hint"
+            android:inputType="textPersonName" />
+
         <Button
             android:id="@+id/login_button"
             android:layout_width="match_parent"

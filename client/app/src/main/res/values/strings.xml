@@ -23,6 +23,7 @@
 
     <!-- Login in screen strings -->
     <string name="login_button">Sign In</string>
+    <string name="login_username_hint">username</string>
     <string name="login_success">"Signed In!"</string>
     <string name="login_help">"Login Help: "</string>
     <string name="login_error">"Login Error: "</string>
@@ -44,8 +45,12 @@
 
     <!-- Settings Screen strings -->
     <string name="server_ip">Server IP:</string>
+    <string name="server_port">Server Port:</string>
+    <string name="server_ip_hint">Server IP</string>
+    <string name="server_port_hint">Server port</string>
     <string name="menu_settings">Settings</string>
     <string name="default_ip">10.0.2.2</string>
+    <string name="default_port">8000</string>
     <string name="apply_settings">Apply</string>
 
     <!-- Biometric Screen strings -->

@@ -17,6 +17,7 @@ import android.view.View;
 import android.view.WindowManager;
 import android.widget.LinearLayout;
 
+import com.gpig.a.settings.Settings;
 import com.gpig.a.settings.SettingsFragment;
 import com.gpig.a.tickets.Ticket;
 
@@ -46,6 +47,9 @@ public class MainActivity extends AppCompatActivity
         drawer.addDrawerListener(toggle);
         toggle.syncState();
         navigationView.setNavigationItemSelectedListener(this);
+
+        //load settings from file
+        Settings.readFromFile(this);
 
         // Obtain the SupportMapFragment and get notified when the fragment_map is ready to be used.
         mapFragment = new MapFragment();
