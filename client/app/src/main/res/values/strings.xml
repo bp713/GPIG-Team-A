@@ -52,4 +52,8 @@
     <string name="bio_subtitle">Login to your account</string>
     <string name="bio_description">Description Here</string>
     <string name="bio_cancel">Cancel</string>
+    <string name="asset_statements">
+        [{
+        \"include\": \"https://tg0.uk:49300/.well-known/assetlinks.json\"
+        }]</string>
 </resources>

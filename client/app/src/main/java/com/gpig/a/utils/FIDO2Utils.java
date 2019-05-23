@@ -150,7 +150,7 @@ public final class FIDO2Utils {
     }
 
     public void register(String email){
-        String serverOptions = getStringFromUrl("http://" + Settings.ServerIP + ":" + Settings.ServerPort + "/authentication/getRegistrationOptions/?courier_email=" + email);
+        String serverOptions = getStringFromUrl("https://" + Settings.ServerIP + ":" + Settings.ServerPort + "/authentication/getRegistrationOptions/?courier_email=" + email);
         JSONObject options;
         try {
             options = new JSONObject(serverOptions);
