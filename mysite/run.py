@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 from eventlet import wsgi
 import eventlet
 from mysite.wsgi import application as app
