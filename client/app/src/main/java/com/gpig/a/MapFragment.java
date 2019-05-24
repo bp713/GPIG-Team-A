@@ -17,28 +17,41 @@ import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.design.widget.BottomSheetBehavior;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.support.v4.content.ContextCompat;
+import android.support.v7.widget.DividerItemDecoration;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
+import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
 
+import com.gpig.a.settings.Settings;
 import com.gpig.a.utils.FileUtils;
 import com.gpig.a.utils.MapUtils;
 import com.gpig.a.utils.RouteUtils;
 import com.gpig.a.utils.StatusUtils;
 
+import org.json.JSONArray;
+import org.json.JSONObject;
 import org.osmdroid.bonuspack.routing.Road;
 import org.osmdroid.bonuspack.routing.RoadManager;
+import org.osmdroid.bonuspack.routing.RoadNode;
 import org.osmdroid.config.Configuration;
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory;
 import org.osmdroid.util.GeoPoint;
 import org.osmdroid.views.MapView;
 import org.osmdroid.views.overlay.Marker;
 import org.osmdroid.views.overlay.Polyline;
+
+import java.util.ArrayList;
 
 public class MapFragment extends Fragment {
 
@@ -61,6 +74,14 @@ public class MapFragment extends Fragment {
     private RouteFromUrlTask routeFromUrlTask = null;
     private String TAG = "MapFragment";
 
+    private BottomSheetBehavior mBottomSheetBehaviour;
+
+    RecyclerView recyclerView;
+    RelativeLayout relativeLayout;
+    RecyclerView.Adapter recyclerViewAdapter;
+    RecyclerView.LayoutManager recylerViewLayoutManager;
+    ArrayList<String> instructions = new ArrayList<>();
+
     public static MapFragment newInstance() {
         return new MapFragment();
     }
@@ -68,6 +89,7 @@ public class MapFragment extends Fragment {
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
+
         return inflater.inflate(R.layout.fragment_map, container, false);
     }
 
@@ -95,6 +117,13 @@ public class MapFragment extends Fragment {
             }
         });
 
+        recyclerView = (RecyclerView) getActivity().findViewById(R.id.rv);
+        recylerViewLayoutManager = new LinearLayoutManager(getContext());
+        recyclerView.setLayoutManager(recylerViewLayoutManager);
+        recyclerViewAdapter = new RecyclerViewAdapter(getContext(),  instructions.toArray(new String[]{}));
+        DividerItemDecoration dividerItemDecoration = new DividerItemDecoration(recyclerView.getContext(), LinearLayoutManager.VERTICAL);
+        recyclerView.addItemDecoration(dividerItemDecoration);
+        recyclerView.setAdapter(recyclerViewAdapter);
     }
 
     private void setCurrentLocation() {
@@ -125,6 +154,15 @@ public class MapFragment extends Fragment {
             @Override
             public void processFinish(Object[] output) {
                 Road road = (Road) output[0];
+                instructions = new ArrayList<>();
+                for (RoadNode n: road.mNodes){
+                    instructions.add(n.mInstructions);
+                }
+                recyclerViewAdapter = new RecyclerViewAdapter(getContext(),  instructions.toArray(new String[]{}));
+                DividerItemDecoration dividerItemDecoration = new DividerItemDecoration(recyclerView.getContext(), LinearLayoutManager.VERTICAL);
+                recyclerView.addItemDecoration(dividerItemDecoration);
+                recyclerView.swapAdapter(recyclerViewAdapter, true);
+
                 sourceLocation = (GeoPoint) output[1];
                 destinationLocation = (GeoPoint) output[2];
                 mapView.zoomToBoundingBox(road.mBoundingBox, true, 75);
@@ -169,7 +207,7 @@ public class MapFragment extends Fragment {
                 }
             });
 
-            routeFromUrlTask.execute("http://192.168.0.19:8000/controller/route");
+            routeFromUrlTask.execute(Settings.getUrlFromSettings(getActivity()));
         }
         else {
             if (FileUtils.doesFileExist(getActivity(), filename)) {

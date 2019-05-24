@@ -35,4 +35,9 @@ public final class Settings {
         }
         FileUtils.writeToInternalStorage(activity, FILENAME, jObject.toString());
     }
+
+    public static String getUrlFromSettings(Activity activity){
+        readFromFile(activity);
+        return "https://" + ServerIP + ":" + Integer.toString(ServerPort) + "/controller/route";
+    }
 }
