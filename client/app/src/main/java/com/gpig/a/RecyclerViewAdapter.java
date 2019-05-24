@@ -6,25 +6,42 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
+import org.osmdroid.bonuspack.routing.RoadNode;
+
+import java.util.ArrayList;
+
 
 public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapter.ViewHolder>{
 
-    String[] SubjectValues;
+    ArrayList<String> instructionsName;
+    ArrayList<Double> instructionsDistance;
+    ArrayList<Double> instructionsTime;
     Context context;
     View view;
     ViewHolder viewHolder;
 
-    public RecyclerViewAdapter(Context context1,String[] SubjectValues1){
-        SubjectValues = SubjectValues1;
-        context = context1;
+    public RecyclerViewAdapter(Context cx, ArrayList<RoadNode> node){
+        instructionsName = new ArrayList<>();
+        instructionsDistance = new ArrayList<>();
+        instructionsTime = new ArrayList<>();
+        for (RoadNode n: node){
+            instructionsName.add(n.mInstructions);
+            instructionsDistance.add(n.mLength);
+            instructionsTime.add(n.mDuration);
+        }
+        context = cx;
     }
 
     public static class ViewHolder extends RecyclerView.ViewHolder{
-        public TextView textView;
+        public TextView instructionView;
+        public TextView distanceView;
+        public TextView timeView;
 
         public ViewHolder(View v){
             super(v);
-            textView = (TextView) v.findViewById(R.id.subject_textview);
+            instructionView = (TextView) v.findViewById(R.id.direction);
+            distanceView = (TextView) v.findViewById(R.id.distance);
+            timeView = (TextView) v.findViewById(R.id.time);
         }
     }
 
@@ -38,11 +55,13 @@ public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapte
 
     @Override
     public void onBindViewHolder(ViewHolder holder, int position){
-        holder.textView.setText(SubjectValues[position]);
+        holder.instructionView.setText(instructionsName.get(position));
+        holder.distanceView.setText(String.format("%.2f", instructionsDistance.get(position)));
+        holder.timeView.setText(String.format("%.2f", instructionsTime.get(position) / 60));
     }
 
     @Override
     public int getItemCount(){
-        return SubjectValues.length;
+        return instructionsName.size();
     }
 }

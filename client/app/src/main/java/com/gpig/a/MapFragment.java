@@ -74,13 +74,9 @@ public class MapFragment extends Fragment {
     private RouteFromUrlTask routeFromUrlTask = null;
     private String TAG = "MapFragment";
 
-    private BottomSheetBehavior mBottomSheetBehaviour;
-
     RecyclerView recyclerView;
-    RelativeLayout relativeLayout;
     RecyclerView.Adapter recyclerViewAdapter;
     RecyclerView.LayoutManager recylerViewLayoutManager;
-    ArrayList<String> instructions = new ArrayList<>();
 
     public static MapFragment newInstance() {
         return new MapFragment();
@@ -116,14 +112,6 @@ public class MapFragment extends Fragment {
                 onCenterCall(v);
             }
         });
-
-        recyclerView = (RecyclerView) getActivity().findViewById(R.id.rv);
-        recylerViewLayoutManager = new LinearLayoutManager(getContext());
-        recyclerView.setLayoutManager(recylerViewLayoutManager);
-        recyclerViewAdapter = new RecyclerViewAdapter(getContext(),  instructions.toArray(new String[]{}));
-        DividerItemDecoration dividerItemDecoration = new DividerItemDecoration(recyclerView.getContext(), LinearLayoutManager.VERTICAL);
-        recyclerView.addItemDecoration(dividerItemDecoration);
-        recyclerView.setAdapter(recyclerViewAdapter);
     }
 
     private void setCurrentLocation() {
@@ -154,11 +142,10 @@ public class MapFragment extends Fragment {
             @Override
             public void processFinish(Object[] output) {
                 Road road = (Road) output[0];
-                instructions = new ArrayList<>();
-                for (RoadNode n: road.mNodes){
-                    instructions.add(n.mInstructions);
-                }
-                recyclerViewAdapter = new RecyclerViewAdapter(getContext(),  instructions.toArray(new String[]{}));
+                recyclerView = (RecyclerView) getActivity().findViewById(R.id.rv);
+                recylerViewLayoutManager = new LinearLayoutManager(getContext());
+                recyclerView.setLayoutManager(recylerViewLayoutManager);
+                recyclerViewAdapter = new RecyclerViewAdapter(getContext(), road.mNodes);
                 DividerItemDecoration dividerItemDecoration = new DividerItemDecoration(recyclerView.getContext(), LinearLayoutManager.VERTICAL);
                 recyclerView.addItemDecoration(dividerItemDecoration);
                 recyclerView.swapAdapter(recyclerViewAdapter, true);
