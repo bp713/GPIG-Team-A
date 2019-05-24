@@ -9,17 +9,25 @@ rp_id = "tg0.uk:49300"  # This must match the origin domain of your app, as seen
 rp = RelyingPartyManager("GPIG A", rp_id=rp_id, credential_storage_backend=MyDBBackend())
 
 def get_registration_options(request):
-    opts = rp.get_registration_options(email=request.GET.get('courier_email'))#custom display name support in github version of pywarp so not using it
+    if "display_name" in request.GET:
+        opts = rp.get_registration_options(email=request.GET.get('courier_email'), display_name=request.GET.get('display_name'))
+    else:
+        opts = rp.get_registration_options(email=request.GET.get('courier_email'))
     return HttpResponse(json.dumps(opts), content_type="application/json")
 
 def register(request):
-    return HttpResponse(json.dumps(data), content_type="application/json")
+    # result = rp.register(attestation_object=bytes, client_data_json=bytes, email="tg736@york.ac.uk")
+    result = rp.register(attestation_object=request.GET.get('attestation_object'), client_data_json=request.GET.get('client_data_json'), email=request.GET.get('courier_email'))
+    return HttpResponse(json.dumps(result), content_type="application/json")
 
 def get_authentication_options(request):
-    pass
+    opts = rp.get_authentication_options(email=request.GET.get('courier_email'))
+    return HttpResponse(json.dumps(opts), content_type="application/json")
+
 
 def authenticate(request):
-    pass
+    result = rp.verify(authenticator_data=bytes, client_data_json=bytes, signature=bytes, user_handle=bytes, raw_id=bytes, email=bytes)
+    return HttpResponse(json.dumps(result), content_type="application/json")
 
 def assetlinks(request):
     data = [{
