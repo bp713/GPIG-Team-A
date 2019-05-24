@@ -11,6 +11,9 @@
     <string name="menu_gallery">Tickets</string>
     <string name="menu_slideshow">Check In</string>
 
+    <!-- Map strings -->
+    <string name="instructions_title">Instructions</string>
+
     <!-- Check in screen strings -->
     <string name="check_in_location_found">Location Found</string>
     <string name="check_in_location_disabled">Location Services Disabled</string>
