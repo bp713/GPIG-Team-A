@@ -47,7 +47,7 @@ def makeroute(point,key,maxtraveltime,points_encoded=False):
 	    	f = open('route'+str(i)+'.txt','w+')
 	    	f.write(json.dumps(api_response2.to_dict()))
 	    	f.close()
-
+	    return json.dumps(api_response.to_dict()))
 	except ApiException as e:
 	    print("Exception when calling RoutingApi->route_get: %s\n" % e)
 makeroute(point,key,maxtraveltime)
