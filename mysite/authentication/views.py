@@ -4,6 +4,7 @@ from .models import Courier
 from pywarp import RelyingPartyManager, Credential
 from .demoBackend import MyDBBackend
 import json
+import base64
 
 rp_id = "tg0.uk:49300"  # This must match the origin domain of your app, as seen by the browser.
 rp = RelyingPartyManager("GPIG A", rp_id=rp_id, credential_storage_backend=MyDBBackend())
@@ -17,7 +18,8 @@ def get_registration_options(request):
 
 def register(request):
     # result = rp.register(attestation_object=bytes, client_data_json=bytes, email="tg736@york.ac.uk")
-    result = rp.register(attestation_object=request.GET.get('attestation_object'), client_data_json=request.GET.get('client_data_json'), email=request.GET.get('courier_email'))
+    print(request.GET)
+    result = rp.register(attestation_object=base64.b64decode(request.POST.get('attestation_object')), client_data_json=base64.b64decode(request.POST.get('client_data_json')), email=request.POST.get('courier_email'))
     return HttpResponse(json.dumps(result), content_type="application/json")
 
 def get_authentication_options(request):
