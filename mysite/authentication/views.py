@@ -1,5 +1,6 @@
 from django.shortcuts import  get_object_or_404, render
 from django.http import HttpResponse
+from django.views.decorators.csrf import csrf_exempt
 from .models import Courier
 from pywarp import RelyingPartyManager, Credential
 from .demoBackend import MyDBBackend
@@ -16,10 +17,14 @@ def get_registration_options(request):
         opts = rp.get_registration_options(email=request.GET.get('courier_email'))
     return HttpResponse(json.dumps(opts), content_type="application/json")
 
+@csrf_exempt #TODO: This should be removed and proper CSRFs used
 def register(request):
     # result = rp.register(attestation_object=bytes, client_data_json=bytes, email="tg736@york.ac.uk")
     print(request.GET)
-    result = rp.register(attestation_object=base64.b64decode(request.POST.get('attestation_object')), client_data_json=base64.b64decode(request.POST.get('client_data_json')), email=request.POST.get('courier_email'))
+    print(request.POST.get('attestation_object'))
+    attestation_object = base64.b64decode(request.POST.get('attestation_object'))
+    client_data_json = base64.b64decode(request.POST.get('client_data_json'))
+    result = rp.register(attestation_object=attestation_object, client_data_json=client_data_json, email=request.POST.get('courier_email'))
     return HttpResponse(json.dumps(result), content_type="application/json")
 
 def get_authentication_options(request):
