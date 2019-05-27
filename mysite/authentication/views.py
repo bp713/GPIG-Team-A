@@ -17,13 +17,19 @@ def get_registration_options(request):
         opts = rp.get_registration_options(email=request.GET.get('courier_email'))
     return HttpResponse(json.dumps(opts), content_type="application/json")
 
+def b64decodeURL(coded):
+    coded = coded.replace('_', '/')
+    coded = coded.replace('-', '+')
+    coded += '=' * (-len(coded) % 4)
+    return base64.b64decode(coded)
+
 @csrf_exempt #TODO: This should be removed and proper CSRFs used
 def register(request):
     # result = rp.register(attestation_object=bytes, client_data_json=bytes, email="tg736@york.ac.uk")
     print(request.GET)
     print(request.POST.get('attestation_object'))
-    attestation_object = base64.b64decode(request.POST.get('attestation_object'))
-    client_data_json = base64.b64decode(request.POST.get('client_data_json'))
+    attestation_object = b64decodeURL(request.POST.get('attestation_object'))
+    client_data_json = b64decodeURL(request.POST.get('client_data_json'))
     result = rp.register(attestation_object=attestation_object, client_data_json=client_data_json, email=request.POST.get('courier_email'))
     return HttpResponse(json.dumps(result), content_type="application/json")
 
