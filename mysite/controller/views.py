@@ -1,6 +1,7 @@
 from django.shortcuts import  get_object_or_404, render
-from django.http import HttpResponse
-from .models import Controller
+from django.http import HttpResponse, HttpResponseRedirect
+from .models import Controller, Route, RouteComponent
+from .forms import RouteForm
 import os
 from django.conf import settings
 import django
@@ -9,13 +10,21 @@ import controller.Routetest as rt
 
 def controller(request, controller_id):
     controller = get_object_or_404(Controller, pk=controller_id)
-    context = { 'controller' : controller}
+    if request.method == 'POST':
+        form = RouteForm(request.POST)
+        if form.is_valid():
+            
+            return HttpResponseRedirect('/route/' + str(controller_id))
+    else:
+        form = RouteForm()
+    context = { 'controller' : controller, 'form': form}
     return render(request, 'controller/controller.html', context)
 
 def route(request):
     json_file = open(os.path.join(settings.BASE_DIR, 'routejson.txt'))
     data = json.load(json_file)
     return HttpResponse(json.dumps(data), content_type="application/json")
+
 
 def routeCalc(request):
     lang1 = 1
@@ -29,4 +38,3 @@ def routeCalc(request):
     
     rt.makeroute(rt.point, rt.key, rt.maxtraveltime)
 
-    
