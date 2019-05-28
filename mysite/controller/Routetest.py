@@ -4,7 +4,7 @@ import swagger_client
 from swagger_client.rest import ApiException
 from pprint import pprint
 import json
-from breakuproute import break_up_route
+from .breakuproute import break_up_route
 # create an instance of the API class
 api_instance = swagger_client.RoutingApi()
 point = ['51.51456185,-0.03501226201922958','53.4794892,-2.2451148'] # list[str] | Specify multiple points for which the route should be calculated. The order is important. Specify at least two points.
