@@ -198,24 +198,13 @@ public class MainActivity extends AppCompatActivity
                     AuthenticatorAttestationResponse response =
                             AuthenticatorAttestationResponse.deserializeFromBytes(
                                     data.getByteArrayExtra(Fido.FIDO2_KEY_RESPONSE_EXTRA));
-                    Toast.makeText(
-                            this,
-                            "Registration key handle:\n"
-                                    + Base64.encode(response.getKeyHandle(), Base64.DEFAULT),
-                            Toast.LENGTH_SHORT)
-                            .show();
-//                    updateRegisterResponseToServer(response);
+                    FIDO2Utils.sendRegisterCompleteToClient(response, username);
                 } else if (requestCode == FIDO2Utils.REQUEST_CODE_SIGN) {
                     Log.d(TAG, "Received sign response from Google Play Services FIDO2 API");
                     AuthenticatorAssertionResponse response =
                             AuthenticatorAssertionResponse.deserializeFromBytes(
                                     data.getByteArrayExtra(Fido.FIDO2_KEY_RESPONSE_EXTRA));
-                    Toast.makeText(
-                            this,
-                            "Sign key handle:\n" + Base64.encode(response.getKeyHandle(), Base64.DEFAULT),
-                            Toast.LENGTH_SHORT)
-                            .show();
-//                    updateSignResponseToServer(response);
+                    FIDO2Utils.sendVerifyCompleteToClient(response, username);
                 }
                 break;
 
