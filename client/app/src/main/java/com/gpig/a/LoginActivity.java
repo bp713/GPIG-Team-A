@@ -25,6 +25,7 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
     @Override
     public void onClick(View v) {
         if (v.getId() == R.id.login_button){
+            final String username = ((EditText)findViewById(R.id.username)).getText().toString();
             if(!BiometricUtils.isSdkVersionSupported()){
                 Toast.makeText(getApplicationContext(), "SDK Version not Supported", Toast.LENGTH_LONG).show();
             }
@@ -40,11 +41,15 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
             else if(!BiometricUtils.isBiometricPromptEnabled()){
                 Toast.makeText(getApplicationContext(), "Biometric Prompt Disabled", Toast.LENGTH_LONG).show();
             }else {
+                if(!username.matches("[^@]+@[^@]+\\.[^@]+")){
+                    Toast.makeText(getApplicationContext(), "Invalid email address!", Toast.LENGTH_LONG).show();
+                    return;
+                }
                 BiometricCallback bc = new BiometricCallback() {
                     @Override
                     public void onAuthenticationSucceeded(BiometricPrompt.AuthenticationResult result) {
                         Intent myIntent = new Intent(LoginActivity.this, MainActivity.class);
-                        myIntent.putExtra("username", ((EditText)findViewById(R.id.username)).getText().toString());
+                        myIntent.putExtra("username", username);
                         startActivity(myIntent);
                         //TODO check login somehow
                         LoginActivity.this.runOnUiThread(new Runnable() {

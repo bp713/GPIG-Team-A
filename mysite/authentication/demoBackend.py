@@ -7,24 +7,19 @@ class MyDBBackend(CredentialStorageBackend):
         pass
 
     def get_credential_by_email(self, email):
-        try:
-            courier = Courier.objects.get(email=email)
-            courier.cred_id = credential.credential_id
-            courier.cred_pub_key = credential.public_key
-        except Exception as e:
-            courier = Courier(email=email)
-        return Credential(credential_id=courier.cred_id,
+        courier = Courier.objects.get(email=email)
+        return Credential(id=courier.cred_id,
                           credential_public_key=courier.cred_pub_key)
 
     def save_credential_for_user(self, email, credential):
         try:
             courier = Courier.objects.get(email=email)
-            courier.cred_id = credential.credential_id
-            courier.cred_pub_key = credential.public_key
+            courier.cred_id = credential.id
+            courier.cred_pub_key = credential.public_key.cbor_cose_key
         except Exception as e:
             courier = Courier(email=email,
-                cred_id = credential.credential_id,
-                cred_pub_key = credential.public_key)
+                cred_id = credential.id,
+                cred_pub_key = credential.public_key.cbor_cose_key)
         courier.save()
 
     def save_challenge_for_user(self, email, challenge, type):
