@@ -9,7 +9,7 @@ import cbor2
 import re
 
 
-def customVerify(rp, authenticator_data, client_data_json, signature, user_handle, raw_id, email):
+def customVerify(rp, authenticator_data, client_data_json, signature, email, user_handle='', raw_id=''):
     "Ascertain the validity of credentials supplied by the client user agent via navigator.credentials.get()"
     email = email.decode()
     if not re.match(r"[^@]+@[^@]+\.[^@]+", email):

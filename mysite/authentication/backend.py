@@ -8,7 +8,7 @@ class MyDBBackend(CredentialStorageBackend):
 
     def get_credential_by_email(self, email):
         courier = Courier.objects.get(email=email)
-        return Credential(id=courier.cred_id,
+        return Credential(credential_id=courier.cred_id,
                           credential_public_key=courier.cred_pub_key)
 
     def save_credential_for_user(self, email, credential):

@@ -3,12 +3,9 @@ from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from .models import Courier
 from pywarp.util import b64_encode, b64url_decode
-# from pywarp.attestation import FIDOU2FAttestationStatement
-# from pywarp.authenticators import AuthenticatorData
 from pywarp import RelyingPartyManager, Credential
-from .FIDOutils import customVerify, customRegister
-
-from .demoBackend import MyDBBackend
+from .FIDO2_utils import customVerify, customRegister
+from .backend import MyDBBackend
 import json
 
 rp_id = "tg0.uk:49300"  # This must match the origin domain of your app, as seen by the browser.
@@ -23,22 +20,27 @@ def get_registration_options(request):
 
 @csrf_exempt #TODO: This should be removed and proper CSRFs used
 def register(request):
-    # result = rp.register(attestation_object=bytes, client_data_json=bytes, email="tg736@york.ac.uk")
-    print(request.GET)
-    print(request.POST.get('attestation_object'))
-    print(request.POST.get('client_data_json'))
     attestation_object = b64url_decode(request.POST.get('attestation_object'))
     client_data_json = request.POST.get('client_data_json')
-    result = customRegister(rp, attestation_object=attestation_object, client_data_json=client_data_json, email=request.POST.get('courier_email').encode('utf-8'))
+    email = request.POST.get('courier_email').encode('utf-8')
+    result = customRegister(rp, attestation_object=attestation_object, client_data_json=client_data_json, email=email)
     return HttpResponse(json.dumps(result), content_type="application/json")
 
 def get_authentication_options(request):
     opts = rp.get_authentication_options(email=request.GET.get('courier_email'))
+    opts['challenge'] = b64_encode(opts['challenge'])
+    opts['rpId'] = rp_id
+    print(opts)
     return HttpResponse(json.dumps(opts), content_type="application/json")
 
 
+@csrf_exempt #TODO: This should be removed and proper CSRFs used
 def authenticate(request):
-    result = customVerify(rp, authenticator_data=bytes, client_data_json=bytes, signature=bytes, user_handle=bytes, raw_id=bytes, email=bytes)
+    authenticator_data = b64url_decode(request.POST.get('authenticator_data'))
+    client_data_json = request.POST.get('client_data_json')
+    signature = b64url_decode(request.POST.get('signature'))
+    email = request.POST.get('courier_email').encode('utf-8')
+    result = customVerify(rp, authenticator_data=authenticator_data, client_data_json=client_data_json, signature=signature, email=email)
     return HttpResponse(json.dumps(result), content_type="application/json")
 
 def assetlinks(request):

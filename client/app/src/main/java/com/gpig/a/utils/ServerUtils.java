@@ -18,9 +18,37 @@ import java.net.URL;
 public final class ServerUtils {
 
     private static final String TAG = "ServerUtils";
+    private static String sessionKey = "";
 
-    public static void postToServer(String url, String data){
-        new CallAPI().execute("https://" + Settings.ServerIP + ":" + Settings.ServerPort + "/" + url, data);
+    public static void postToServer(String path, String data){
+        new CallAPI().execute("https://" + Settings.ServerIP + ":" + Settings.ServerPort + "/" + path, data);
+    }
+
+    public static String getFromServer(String path) {
+        String serverUrl = "https://" + Settings.ServerIP + ":" + Settings.ServerPort + "/" + path;
+        StringBuilder result = new StringBuilder();
+        try {
+            URL url = new URL(serverUrl);
+            HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
+            urlConnection.setConnectTimeout(3000);
+            try {
+                InputStream in = urlConnection.getInputStream();
+                BufferedReader reader = new BufferedReader(new InputStreamReader(in));
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    result.append(line);
+                }
+                in.close();
+                reader.close();
+            } finally {
+                urlConnection.disconnect();
+            }
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            Log.e(TAG, ex.toString());
+        }
+
+        return result.toString();
     }
 
     static class CallAPI extends AsyncTask<String, String, String> {

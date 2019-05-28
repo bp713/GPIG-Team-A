@@ -2,7 +2,6 @@ package com.gpig.a.utils;
 
 import android.app.Activity;
 import android.content.IntentSender;
-import android.os.Build;
 import android.util.Base64;
 import android.util.Log;
 
@@ -11,6 +10,7 @@ import com.google.android.gms.fido.fido2.Fido2ApiClient;
 import com.google.android.gms.fido.fido2.Fido2PendingIntent;
 import com.google.android.gms.fido.fido2.api.common.Attachment;
 import com.google.android.gms.fido.fido2.api.common.AttestationConveyancePreference;
+import com.google.android.gms.fido.fido2.api.common.AuthenticatorAssertionResponse;
 import com.google.android.gms.fido.fido2.api.common.AuthenticatorAttestationResponse;
 import com.google.android.gms.fido.fido2.api.common.AuthenticatorSelectionCriteria;
 import com.google.android.gms.fido.fido2.api.common.PublicKeyCredentialCreationOptions;
@@ -22,21 +22,13 @@ import com.google.android.gms.fido.fido2.api.common.PublicKeyCredentialType;
 import com.google.android.gms.fido.fido2.api.common.PublicKeyCredentialUserEntity;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
-import com.gpig.a.settings.Settings;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.BufferedReader;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -59,55 +51,46 @@ public final class FIDO2Utils {
         this.activity = activity;
     }
 
-    public void sign() {
-        PublicKeyCredentialRequestOptions.Builder builder =
-                new PublicKeyCredentialRequestOptions.Builder();
+    public void sign(String email) {
+        String serverOptions = ServerUtils.getFromServer("authentication/getAuthenticationOptions/?courier_email=" + email);
+        JSONObject options;
+        try {
+            options = new JSONObject(serverOptions);
+            PublicKeyCredentialRequestOptions.Builder builder =
+                    new PublicKeyCredentialRequestOptions.Builder();
 
-        builder.setRpId("");//TODO from server
+            builder.setChallenge(Base64.decode(options.getString("challenge"), Base64.DEFAULT));
+            builder.setTimeoutSeconds((double)options.getInt("timeout"));
+            builder.setRpId(options.getString("rpId"));
 
-        byte[] challenge = new byte[20];
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            try {
-                SecureRandom.getInstanceStrong().nextBytes(challenge);
-            } catch (NoSuchAlgorithmException e) {
-                SecureRandom random = new SecureRandom();
-                random.nextBytes(challenge);
+            builder.setRequestId(FIDO2Utils.REQUEST_CODE_SIGN);
+            List<PublicKeyCredentialDescriptor> descriptors = new ArrayList<>();
+            JSONArray allowedKeys = options.getJSONArray("allowCredentials");
+            for (int i =0; i<allowedKeys.length(); i++) {
+                JSONObject key = allowedKeys.getJSONObject(i);
+                String allowedKey = key.getString("id");
+//                sessionIds.put(allowedKey, sessionId);
+                PublicKeyCredentialDescriptor publicKeyCredentialDescriptor =
+                        new PublicKeyCredentialDescriptor(
+                                PublicKeyCredentialType.PUBLIC_KEY.toString(),
+                                Base64.decode(allowedKey, Base64.DEFAULT),
+                                /* transports= */ null);
+                descriptors.add(publicKeyCredentialDescriptor);
             }
-        } else {
-            SecureRandom random = new SecureRandom();
-            random.nextBytes(challenge);
+            builder.setAllowList(descriptors);
+
+
+            PublicKeyCredentialRequestOptions pko = builder.build();
+            sendSignRequestToClient(pko);
+        } catch (JSONException e) {
+            e.printStackTrace();
         }
-        builder.setChallenge(challenge);
-
-        builder.setRequestId(FIDO2Utils.REQUEST_CODE_SIGN);
-        //TODO add FIDO2 keys
-        List<String> allowedKeys = new ArrayList<>();
-        List<PublicKeyCredentialDescriptor> descriptors = new ArrayList<>();
-//        for (String allowedKey : allowedKeys) {
-//            sessionIds.put(allowedKey, sessionId);
-//            PublicKeyCredentialDescriptor publicKeyCredentialDescriptor =
-//                    new PublicKeyCredentialDescriptor(
-//                            PublicKeyCredentialType.PUBLIC_KEY.toString(),
-//                            Base64.decode(allowedKey, Base64.URL_SAFE),
-//                            /* transports= */ null);
-//            descriptors.add(publicKeyCredentialDescriptor);
-//        }
-        builder.setAllowList(descriptors);
-        //TODO add FIDO2 extensions?
-//        builder.setAuthenticationExtensions();
-        //TODO add FIDO2 timeout
-//        builder.setTimeoutSeconds();
-        //TODO add FIDO2 token binding?
-//        builder.setTokenBinding();
-
-
-        PublicKeyCredentialRequestOptions pko = builder.build();
-        sendSignRequestToClient(pko);
     }
 
 
     private void sendSignRequestToClient(PublicKeyCredentialRequestOptions options) {
         Task<Fido2PendingIntent> result = mfido2ApiClient.getSignIntent(options);
+        Log.i(TAG, "sendSignRequestToClient: ");
 
         result.addOnSuccessListener(
                 new OnSuccessListener<Fido2PendingIntent>() {
@@ -124,35 +107,20 @@ public final class FIDO2Utils {
                 });
     }
 
-
-    private static String getStringFromUrl(String serverUrl) {
-        StringBuilder result = new StringBuilder();
+    public static void sendVerifyCompleteToClient(AuthenticatorAssertionResponse response, String email) {
         try {
-            URL url = new URL(serverUrl);
-            HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
-            urlConnection.setConnectTimeout(3000);
-            try {
-                InputStream in = urlConnection.getInputStream();
-                BufferedReader reader = new BufferedReader(new InputStreamReader(in));
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    result.append(line);
-                }
-                in.close();
-                reader.close();
-            } finally {
-                urlConnection.disconnect();
-            }
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            Log.e(TAG, ex.toString());
+            String data = "authenticator_data=" + Base64.encodeToString(response.getAuthenticatorData(), Base64.URL_SAFE);
+            data += "&client_data_json=" + new String(response.getClientDataJSON(), StandardCharsets.UTF_8);
+            data += "&signature=" + Base64.encodeToString(response.getSignature(), Base64.URL_SAFE);
+            data += "&courier_email=" + URLEncoder.encode(email, "UTF-8");
+            ServerUtils.postToServer("authentication/authenticate/", data);
+        } catch (Exception e) {
+            e.printStackTrace();
         }
-
-        return result.toString();
     }
 
     public void register(String email) {
-        String serverOptions = getStringFromUrl("https://" + Settings.ServerIP + ":" + Settings.ServerPort + "/authentication/getRegistrationOptions/?courier_email=" + email);
+        String serverOptions = ServerUtils.getFromServer("authentication/getRegistrationOptions/?courier_email=" + email);
         JSONObject options;
         try {
             options = new JSONObject(serverOptions);
@@ -255,7 +223,7 @@ public final class FIDO2Utils {
             data += "&client_data_json=" + new String(response.getClientDataJSON(), StandardCharsets.UTF_8);//Base64.encodeToString(response.getClientDataJSON(), Base64.URL_SAFE);
             data += "&courier_email=" + URLEncoder.encode(email, "UTF-8");
             ServerUtils.postToServer("authentication/register/", data);
-        }catch(Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }

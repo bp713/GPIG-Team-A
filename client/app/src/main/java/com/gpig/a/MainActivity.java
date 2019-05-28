@@ -204,12 +204,7 @@ public class MainActivity extends AppCompatActivity
                     AuthenticatorAssertionResponse response =
                             AuthenticatorAssertionResponse.deserializeFromBytes(
                                     data.getByteArrayExtra(Fido.FIDO2_KEY_RESPONSE_EXTRA));
-                    Toast.makeText(
-                            this,
-                            "Sign key handle:\n" + Base64.encode(response.getKeyHandle(), Base64.DEFAULT),
-                            Toast.LENGTH_SHORT)
-                            .show();
-//                    updateSignResponseToServer(response);
+                    FIDO2Utils.sendVerifyCompleteToClient(response, username);
                 }
                 break;
 

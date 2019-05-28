@@ -32,6 +32,8 @@ public class CheckInFragment extends Fragment implements View.OnClickListener {
         b.setOnClickListener(this);
         b = v.findViewById(R.id.register_button);
         b.setOnClickListener(this);
+        b = v.findViewById(R.id.verify);
+        b.setOnClickListener(this);
         return v;
     }
 
@@ -47,9 +49,11 @@ public class CheckInFragment extends Fragment implements View.OnClickListener {
         if(v.getId() == R.id.check_in_button){
             //TODO check in
         }else if(v.getId() == R.id.register_button){
-            Log.i(TAG, "onClick: " + getActivity().toString());
             FIDO2Utils fu = new FIDO2Utils(getActivity());
             fu.register(MainActivity.username);
+        }else if(v.getId() == R.id.verify){
+            FIDO2Utils fu = new FIDO2Utils(getActivity());
+            fu.sign(MainActivity.username);
         }
     }
 }
