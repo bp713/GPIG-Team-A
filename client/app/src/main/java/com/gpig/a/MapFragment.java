@@ -336,6 +336,13 @@ public class MapFragment extends Fragment {
         // remove the listeners or the app crashes
         locationManager.removeUpdates(locationListener);
         sensorManager.unregisterListener(sensorEventListener);
+        if (routeCourierTask != null) {
+            routeCourierTask.cancel(true);
+        }
+        if (routeFromUrlTask != null){
+            routeFromUrlTask.cancel(true);
+        }
+
     }
 
     static class RouteCourierTask extends AsyncTask<String, Integer, Object[]> {
