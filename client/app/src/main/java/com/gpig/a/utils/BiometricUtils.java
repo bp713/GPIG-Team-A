@@ -11,7 +11,6 @@ import android.os.CancellationSignal;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.hardware.fingerprint.FingerprintManagerCompat;
 
-import com.gpig.a.LoginActivity;
 import com.gpig.a.R;
 
 import java.util.concurrent.Executor;

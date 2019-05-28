@@ -10,9 +10,9 @@ import com.google.android.gms.fido.Fido;
 import com.google.android.gms.fido.fido2.Fido2ApiClient;
 import com.google.android.gms.fido.fido2.Fido2PendingIntent;
 import com.google.android.gms.fido.fido2.api.common.Attachment;
-import com.google.android.gms.fido.fido2.api.common.AuthenticationExtensions;
+import com.google.android.gms.fido.fido2.api.common.AttestationConveyancePreference;
+import com.google.android.gms.fido.fido2.api.common.AuthenticatorAttestationResponse;
 import com.google.android.gms.fido.fido2.api.common.AuthenticatorSelectionCriteria;
-import com.google.android.gms.fido.fido2.api.common.FidoAppIdExtension;
 import com.google.android.gms.fido.fido2.api.common.PublicKeyCredentialCreationOptions;
 import com.google.android.gms.fido.fido2.api.common.PublicKeyCredentialDescriptor;
 import com.google.android.gms.fido.fido2.api.common.PublicKeyCredentialParameters;
@@ -33,6 +33,8 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.util.ArrayList;
@@ -51,12 +53,13 @@ public final class FIDO2Utils {
     private final Map<String, String> sessionIds = new HashMap<>();
 
     private final Fido2ApiClient mfido2ApiClient;
-    public FIDO2Utils(Activity activity){
+
+    public FIDO2Utils(Activity activity) {
         mfido2ApiClient = Fido.getFido2ApiClient(activity);
         this.activity = activity;
     }
 
-    public void sign(){
+    public void sign() {
         PublicKeyCredentialRequestOptions.Builder builder =
                 new PublicKeyCredentialRequestOptions.Builder();
 
@@ -70,7 +73,7 @@ public final class FIDO2Utils {
                 SecureRandom random = new SecureRandom();
                 random.nextBytes(challenge);
             }
-        }else{
+        } else {
             SecureRandom random = new SecureRandom();
             random.nextBytes(challenge);
         }
@@ -122,7 +125,7 @@ public final class FIDO2Utils {
     }
 
 
-    private static String getStringFromUrl(String serverUrl){
+    private static String getStringFromUrl(String serverUrl) {
         StringBuilder result = new StringBuilder();
         try {
             URL url = new URL(serverUrl);
@@ -140,8 +143,7 @@ public final class FIDO2Utils {
             } finally {
                 urlConnection.disconnect();
             }
-        }
-        catch(Exception ex){
+        } catch (Exception ex) {
             ex.printStackTrace();
             Log.e(TAG, ex.toString());
         }
@@ -149,7 +151,7 @@ public final class FIDO2Utils {
         return result.toString();
     }
 
-    public void register(String email){
+    public void register(String email) {
         String serverOptions = getStringFromUrl("https://" + Settings.ServerIP + ":" + Settings.ServerPort + "/authentication/getRegistrationOptions/?courier_email=" + email);
         JSONObject options;
         try {
@@ -160,7 +162,7 @@ public final class FIDO2Utils {
             builder.setChallenge(Base64.decode(options.getString("challenge"), Base64.DEFAULT));
 
             // Parse RP
-            JSONObject rpObj =  options.getJSONObject("rp");
+            JSONObject rpObj = options.getJSONObject("rp");
             String rpId = rpObj.getString("id");
             String rpName = rpObj.getString("name");
             String rpIcon = null;
@@ -181,7 +183,7 @@ public final class FIDO2Utils {
             // Parse parameters
             JSONArray pubKeyCredParams = options.getJSONArray("pubKeyCredParams");
             List<PublicKeyCredentialParameters> parameters = new ArrayList<>();
-            for(int i = 0; i < pubKeyCredParams.length(); i++) {
+            for (int i = 0; i < pubKeyCredParams.length(); i++) {
                 JSONObject pubKeyCredParam = pubKeyCredParams.getJSONObject(i);
                 PublicKeyCredentialParameters parameter =
                         new PublicKeyCredentialParameters(pubKeyCredParam.getString("type"), pubKeyCredParam.getInt("alg"));
@@ -195,7 +197,7 @@ public final class FIDO2Utils {
             // Parse exclude list
             JSONArray excludedKeys = options.getJSONArray("excludeCredentials");
             List<PublicKeyCredentialDescriptor> descriptors = new ArrayList<>();//TODO check this with a functioning server (don't think ours supports it)
-            for(int i = 0; i < excludedKeys.length(); i++) {
+            for (int i = 0; i < excludedKeys.length(); i++) {
                 PublicKeyCredentialDescriptor publicKeyCredentialDescriptor = new PublicKeyCredentialDescriptor(
                         PublicKeyCredentialType.PUBLIC_KEY.toString(),
                         Base64.decode(excludedKeys.getString(i), Base64.URL_SAFE),
@@ -211,6 +213,8 @@ public final class FIDO2Utils {
                         Attachment.fromString(options.getString("attachment")));
             }
             builder.setAuthenticatorSelection(criteria.build());
+
+            builder.setAttestationConveyancePreference(AttestationConveyancePreference.DIRECT); // TODO parameterise this?
 
 //            AuthenticationExtensions.Builder extensions = new AuthenticationExtensions.Builder(); //TODO extension loc:true is hardcoded into server why? do we need it?
 //            extensions.setFido2Extension(new FidoAppIdExtension("loc"));
@@ -238,11 +242,22 @@ public final class FIDO2Utils {
                             } catch (IntentSender.SendIntentException e) {
                                 Log.e(TAG, "Error launching pending intent for register request", e);
                             }
-                        }else{
+                        } else {
                             Log.i(TAG, "Activity cant launch intent!");
                         }
                     }
                 });
+    }
+
+    public static void sendRegisterCompleteToClient(AuthenticatorAttestationResponse response, String email) {
+        try {
+            String data = "attestation_object=" + Base64.encodeToString(response.getAttestationObject(), Base64.URL_SAFE);
+            data += "&client_data_json=" + new String(response.getClientDataJSON(), StandardCharsets.UTF_8);//Base64.encodeToString(response.getClientDataJSON(), Base64.URL_SAFE);
+            data += "&courier_email=" + URLEncoder.encode(email, "UTF-8");
+            ServerUtils.postToServer("authentication/register/", data);
+        }catch(Exception e){
+            e.printStackTrace();
+        }
     }
 
 }
