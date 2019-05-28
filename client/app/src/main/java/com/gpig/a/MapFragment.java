@@ -47,6 +47,7 @@ import org.osmdroid.bonuspack.routing.RoadNode;
 import org.osmdroid.config.Configuration;
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory;
 import org.osmdroid.util.GeoPoint;
+import org.osmdroid.views.CustomZoomButtonsController;
 import org.osmdroid.views.MapView;
 import org.osmdroid.views.overlay.Marker;
 import org.osmdroid.views.overlay.Polyline;
@@ -103,13 +104,32 @@ public class MapFragment extends Fragment {
         mapView.setTileSource(TileSourceFactory.MAPNIK);
         mapView.setUseDataConnection(true);
         mapView.setMultiTouchControls(true);
-
+        mapView.getZoomController().setVisibility(CustomZoomButtonsController.Visibility.NEVER);
         requestAllPermissions();
 
         FloatingActionButton myFab = getView().findViewById(R.id.loc);
         myFab.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 onCenterCall(v);
+            }
+        });
+
+        FloatingActionButton zoomIn = getView().findViewById(R.id.zoomIn);
+        zoomIn.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                if (mapView.getZoomLevelDouble() < mapView.getMaxZoomLevel()){
+                    mapView.getController().zoomIn();
+                }
+            }
+        });
+
+        FloatingActionButton zoomOut = getView().findViewById(R.id.zoomOut);
+        zoomOut.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                if (mapView.getZoomLevelDouble() > mapView.getMinZoomLevel()){
+                    mapView.getController().zoomOut();
+                }
+
             }
         });
     }
@@ -152,7 +172,7 @@ public class MapFragment extends Fragment {
 
                 sourceLocation = (GeoPoint) output[1];
                 destinationLocation = (GeoPoint) output[2];
-                mapView.zoomToBoundingBox(road.mBoundingBox, true, 75);
+                mapView.zoomToBoundingBox(road.mBoundingBox, true, 175);
                 Polyline roadOverlay = RoadManager.buildRoadOverlay(road);
                 mapView.getOverlays().add(roadOverlay);
 

@@ -10,6 +10,28 @@
         android:layout_height="match_parent">
 
         <android.support.design.widget.FloatingActionButton
+            android:id="@+id/zoomIn"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:layout_marginTop="16dp"
+            android:clickable="true"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:srcCompat="@drawable/zoom_in" />
+
+        <android.support.design.widget.FloatingActionButton
+            android:id="@+id/zoomOut"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:layout_marginTop="80dp"
+            android:clickable="true"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:srcCompat="@drawable/zoom_out" />
+
+        <android.support.design.widget.FloatingActionButton
             android:id="@+id/loc"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -31,8 +53,8 @@
             android:id="@+id/mapView"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            tools:layout_editor_absoluteX="-72dp"
-            tools:layout_editor_absoluteY="680dp" />
+            tools:layout_editor_absoluteX="-147dp"
+            tools:layout_editor_absoluteY="39dp" />
     </android.support.constraint.ConstraintLayout>
 
     <android.support.design.widget.CoordinatorLayout
