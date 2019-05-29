@@ -204,7 +204,7 @@ public class MainActivity extends AppCompatActivity
                     AuthenticatorAssertionResponse response =
                             AuthenticatorAssertionResponse.deserializeFromBytes(
                                     data.getByteArrayExtra(Fido.FIDO2_KEY_RESPONSE_EXTRA));
-                    FIDO2Utils.sendVerifyCompleteToClient(response, username);
+                    FIDO2Utils.sendVerifyCompleteToClient(response, username, this);
                 }
                 break;
 

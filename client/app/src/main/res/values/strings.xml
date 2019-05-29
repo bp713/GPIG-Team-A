@@ -18,6 +18,7 @@
     <string name="check_in_location_found">Location Found</string>
     <string name="check_in_location_disabled">Location Services Disabled</string>
     <string name="check_in_location_searching">Location Searching</string>
+    <string name="check_in_location_no_permission">Location Permission Not Granted</string>
     <string name="check_in_location_incorrect">Location Incorrect</string>
     <string name="check_in_location_correct">Location Correct</string>
     <string name="check_in_network_connected">Network Connected</string>

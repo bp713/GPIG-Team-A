@@ -18,10 +18,9 @@ import java.net.URL;
 public final class ServerUtils {
 
     private static final String TAG = "ServerUtils";
-    private static String sessionKey = "";
 
-    public static void postToServer(String path, String data){
-        new CallAPI().execute("https://" + Settings.ServerIP + ":" + Settings.ServerPort + "/" + path, data);
+    public static AsyncTask<String, String, String> postToServer(String path, String data){
+        return new CallAPI().execute("https://" + Settings.ServerIP + ":" + Settings.ServerPort + "/" + path, data);
     }
 
     public static String getFromServer(String path) {

@@ -2,6 +2,7 @@ package com.gpig.a.utils;
 
 import android.app.Activity;
 import android.content.IntentSender;
+import android.os.AsyncTask;
 import android.util.Base64;
 import android.util.Log;
 
@@ -107,13 +108,18 @@ public final class FIDO2Utils {
                 });
     }
 
-    public static void sendVerifyCompleteToClient(AuthenticatorAssertionResponse response, String email) {
+    public static void sendVerifyCompleteToClient(AuthenticatorAssertionResponse response, String email, Activity activity) {
         try {
             String data = "authenticator_data=" + Base64.encodeToString(response.getAuthenticatorData(), Base64.URL_SAFE);
             data += "&client_data_json=" + new String(response.getClientDataJSON(), StandardCharsets.UTF_8);
             data += "&signature=" + Base64.encodeToString(response.getSignature(), Base64.URL_SAFE);
             data += "&courier_email=" + URLEncoder.encode(email, "UTF-8");
-            ServerUtils.postToServer("authentication/authenticate/", data);
+            if(StatusUtils.canCheckIn(activity)){
+                data += "&check_in=" + URLEncoder.encode(email, "UTF-8");
+            }
+            AsyncTask<String, String, String> task = ServerUtils.postToServer("authentication/authenticate/", data);
+//            String result = task.get(); //TODO extract and save session key or next route?
+//            Log.i(TAG, "sendVerifyCompleteToClient: " + result);
         } catch (Exception e) {
             e.printStackTrace();
         }
