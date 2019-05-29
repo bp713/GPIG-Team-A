@@ -3,11 +3,14 @@ package com.gpig.a.utils;
 import android.os.AsyncTask;
 import android.util.Log;
 
+import com.gpig.a.PollServer;
 import com.gpig.a.settings.Settings;
 
 import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
@@ -18,6 +21,7 @@ import java.net.URL;
 public final class ServerUtils {
 
     private static final String TAG = "ServerUtils";
+    public static PollServer pollServer;
 
     public static AsyncTask<String, String, String> postToServer(String path, String data){
         return new CallAPI().execute("https://" + Settings.ServerIP + ":" + Settings.ServerPort + "/" + path, data);
@@ -42,7 +46,11 @@ public final class ServerUtils {
             } finally {
                 urlConnection.disconnect();
             }
-        } catch (Exception ex) {
+        } catch (FileNotFoundException ex) {
+            ex.printStackTrace();
+            Log.e(TAG, ex.toString());
+            return "True";
+        } catch (IOException ex) {
             ex.printStackTrace();
             Log.e(TAG, ex.toString());
         }

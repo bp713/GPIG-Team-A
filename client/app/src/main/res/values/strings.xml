@@ -27,7 +27,7 @@
 
     <!-- Login in screen strings -->
     <string name="login_button">Sign In</string>
-    <string name="login_username_hint">username</string>
+    <string name="login_email_hint">Email</string>
     <string name="login_success">"Signed In!"</string>
     <string name="login_help">"Login Help: "</string>
     <string name="login_error">"Login Error: "</string>

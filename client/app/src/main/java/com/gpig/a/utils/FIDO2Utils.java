@@ -1,10 +1,16 @@
 package com.gpig.a.utils;
 
 import android.app.Activity;
+import android.app.NotificationManager;
+import android.content.Context;
+import android.content.Intent;
 import android.content.IntentSender;
+import android.net.ConnectivityManager;
 import android.os.AsyncTask;
 import android.util.Base64;
 import android.util.Log;
+import android.widget.EditText;
+import android.widget.Toast;
 
 import com.google.android.gms.fido.Fido;
 import com.google.android.gms.fido.fido2.Fido2ApiClient;
@@ -13,6 +19,7 @@ import com.google.android.gms.fido.fido2.api.common.Attachment;
 import com.google.android.gms.fido.fido2.api.common.AttestationConveyancePreference;
 import com.google.android.gms.fido.fido2.api.common.AuthenticatorAssertionResponse;
 import com.google.android.gms.fido.fido2.api.common.AuthenticatorAttestationResponse;
+import com.google.android.gms.fido.fido2.api.common.AuthenticatorErrorResponse;
 import com.google.android.gms.fido.fido2.api.common.AuthenticatorSelectionCriteria;
 import com.google.android.gms.fido.fido2.api.common.PublicKeyCredentialCreationOptions;
 import com.google.android.gms.fido.fido2.api.common.PublicKeyCredentialDescriptor;
@@ -23,6 +30,9 @@ import com.google.android.gms.fido.fido2.api.common.PublicKeyCredentialType;
 import com.google.android.gms.fido.fido2.api.common.PublicKeyCredentialUserEntity;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
+import com.gpig.a.PollServer;
+import com.gpig.a.R;
+import com.gpig.a.settings.Settings;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -34,6 +44,10 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import static android.app.Activity.RESULT_CANCELED;
+import static android.app.Activity.RESULT_OK;
+import static android.content.Context.NOTIFICATION_SERVICE;
 
 
 public final class FIDO2Utils {
@@ -85,6 +99,7 @@ public final class FIDO2Utils {
             sendSignRequestToClient(pko);
         } catch (JSONException e) {
             e.printStackTrace();
+            Toast.makeText(activity.getApplicationContext(), "Failed: " + serverOptions, Toast.LENGTH_LONG).show();
         }
     }
 
@@ -115,11 +130,25 @@ public final class FIDO2Utils {
             data += "&signature=" + Base64.encodeToString(response.getSignature(), Base64.URL_SAFE);
             data += "&courier_email=" + URLEncoder.encode(email, "UTF-8");
             if(StatusUtils.canCheckIn(activity)){
-                data += "&check_in=" + URLEncoder.encode(email, "UTF-8");
+                data += "&check_in=" + StatusUtils.getLastKnownLocation(activity).toString();
             }
             AsyncTask<String, String, String> task = ServerUtils.postToServer("authentication/authenticate/", data);
-//            String result = task.get(); //TODO extract and save session key or next route?
-//            Log.i(TAG, "sendVerifyCompleteToClient: " + result);
+            String result = task.get(); //TODO extract and save session key or next route?
+            JSONObject options = new JSONObject(result);
+            if(options.getBoolean("verified")) {
+                Settings.SessionKey = options.getString("session_key");
+                Settings.writeToFile(activity);
+                ServerUtils.pollServer = new PollServer();
+                ServerUtils.pollServer.setAlarm(activity.getApplicationContext());
+                if(StatusUtils.canCheckIn(activity)) {
+                    data = "one_time_key=" + options.getString("one_time_key");
+                    data += "&check_in=" + StatusUtils.getLastKnownLocation(activity).toString();
+                    task = ServerUtils.postToServer("checkin/", data);
+                }
+                Log.i(TAG, "sendVerifyCompleteToClient: " + result);
+            }else{
+                Toast.makeText(activity.getApplicationContext(), "Verification Failed! Is your email correct?", Toast.LENGTH_SHORT).show();
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -231,6 +260,49 @@ public final class FIDO2Utils {
             ServerUtils.postToServer("authentication/register/", data);
         } catch (Exception e) {
             e.printStackTrace();
+        }
+    }
+
+    public static void onActivityResult(int requestCode, int resultCode, Intent data, String email, Activity activity) {
+        switch (resultCode) {
+            case RESULT_OK:
+                if (data.hasExtra(Fido.FIDO2_KEY_ERROR_EXTRA)) {
+                    Log.d(TAG, "Received error response from Google Play Services FIDO2 API");
+                    AuthenticatorErrorResponse response =
+                            AuthenticatorErrorResponse.deserializeFromBytes(
+                                    data.getByteArrayExtra(Fido.FIDO2_KEY_ERROR_EXTRA));
+                    Toast.makeText(
+                            activity, "Operation failed\n" + response.getErrorMessage(), Toast.LENGTH_SHORT)
+                            .show();
+                    Log.d(TAG, "Received error: " + response.getErrorMessage());
+                    Log.d(TAG, "Received error: " + response.getErrorCode());
+                    Log.d(TAG, "Received error: " + response.getErrorCodeAsInt());
+                } else if (requestCode == FIDO2Utils.REQUEST_CODE_REGISTER) {
+                    Log.d(TAG, "Received register response from Google Play Services FIDO2 API");
+                    AuthenticatorAttestationResponse response =
+                            AuthenticatorAttestationResponse.deserializeFromBytes(
+                                    data.getByteArrayExtra(Fido.FIDO2_KEY_RESPONSE_EXTRA));
+                    FIDO2Utils.sendRegisterCompleteToClient(response, email);
+                } else if (requestCode == FIDO2Utils.REQUEST_CODE_SIGN) {
+                    Log.d(TAG, "Received sign response from Google Play Services FIDO2 API");
+                    AuthenticatorAssertionResponse response =
+                            AuthenticatorAssertionResponse.deserializeFromBytes(
+                                    data.getByteArrayExtra(Fido.FIDO2_KEY_RESPONSE_EXTRA));
+                    FIDO2Utils.sendVerifyCompleteToClient(response, email, activity);
+                }
+                break;
+
+            case RESULT_CANCELED:
+                Toast.makeText(activity, "Operation is cancelled", Toast.LENGTH_SHORT).show();
+                break;
+
+            default:
+                Toast.makeText(
+                        activity,
+                        "Operation failed, with resultCode " + resultCode,
+                        Toast.LENGTH_SHORT)
+                        .show();
+                break;
         }
     }
 

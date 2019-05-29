@@ -63,20 +63,17 @@ def customRegister(rp, client_data_json, attestation_object, email):
         #INFO at https://medium.com/@herrjemand/verifying-fido2-safetynet-attestation-bd261ce1978d
         #verify payload
         payload_json = json.loads(b64url_decode(payload).decode())
-        print('payload =', payload_json)
         nonce_base = authenticator_attestation_response["authData"] + client_data_hash
         nonce_buffer = hashlib.sha256(nonce_base).digest()
         expected_nonce = b64_encode(nonce_buffer)
         assert payload_json["nonce"] == expected_nonce
         assert payload_json["ctsProfileMatch"]
 
-        #verify header
+        #TODO: verify header
         header_json = json.loads(b64url_decode(header).decode())
-        print('header =', header_json)
 
-        #verify JWT
-        print('authenticator_data =', authenticator_data)
-        #verify cert chain
+        #TODO: verify JWT
+        #TODO: verify cert chain
         # att_stmt = FIDOU2FAttestationStatement(header_json)
         # attestation = att_stmt.validate(authenticator_data,
         #                                 rp_id_hash=authenticator_data.rp_id_hash,

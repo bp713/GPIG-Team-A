@@ -4,15 +4,25 @@ import android.content.Intent;
 import android.hardware.biometrics.BiometricPrompt;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
+import com.google.android.gms.fido.Fido;
+import com.google.android.gms.fido.fido2.api.common.AuthenticatorAssertionResponse;
+import com.google.android.gms.fido.fido2.api.common.AuthenticatorAttestationResponse;
+import com.google.android.gms.fido.fido2.api.common.AuthenticatorErrorResponse;
+import com.gpig.a.settings.Settings;
 import com.gpig.a.utils.BiometricCallback;
 import com.gpig.a.utils.BiometricUtils;
+import com.gpig.a.utils.FIDO2Utils;
+import com.gpig.a.utils.StatusUtils;
 
 public class LoginActivity extends AppCompatActivity implements View.OnClickListener {
+
+    private static final String TAG = "LoginActivity";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -25,7 +35,7 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
     @Override
     public void onClick(View v) {
         if (v.getId() == R.id.login_button){
-            final String username = ((EditText)findViewById(R.id.username)).getText().toString();
+            final String email = ((EditText)findViewById(R.id.email)).getText().toString();
             if(!BiometricUtils.isSdkVersionSupported()){
                 Toast.makeText(getApplicationContext(), "SDK Version not Supported", Toast.LENGTH_LONG).show();
             }
@@ -41,7 +51,7 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
             else if(!BiometricUtils.isBiometricPromptEnabled()){
                 Toast.makeText(getApplicationContext(), "Biometric Prompt Disabled", Toast.LENGTH_LONG).show();
             }else {
-                if(!username.matches("[^@]+@[^@]+\\.[^@]+")){
+                if(!email.matches("[^@]+@[^@]+\\.[^@]+")){
                     Toast.makeText(getApplicationContext(), "Invalid email address!", Toast.LENGTH_LONG).show();
                     return;
                 }
@@ -49,9 +59,26 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
                     @Override
                     public void onAuthenticationSucceeded(BiometricPrompt.AuthenticationResult result) {
                         Intent myIntent = new Intent(LoginActivity.this, MainActivity.class);
-                        myIntent.putExtra("username", username);
-                        startActivity(myIntent);
-                        //TODO check login somehow
+                        myIntent.putExtra("email", email);
+                        //TODO check login
+//                        if(!email.equals(Settings.LastEmail)){
+//                            if(StatusUtils.isNetworkAvailable(LoginActivity.this)) {
+//                                //TODO new user need to user FIDO to authenticate and get a session key
+//                                FIDO2Utils fu = new FIDO2Utils(LoginActivity.this);
+//                                fu.sign(email);
+//                                return;
+//                            }else{
+//                                LoginActivity.this.runOnUiThread(new Runnable() {
+//                                    public void run() {
+//                                        String no_network = "Network required to sync new user";//getString(R.string.login_success);
+//                                        Toast.makeText(LoginActivity.this, no_network, Toast.LENGTH_LONG).show();
+//                                    }
+//                                });
+//                                return;
+//                            }
+//                        }else {
+                            startActivity(myIntent);
+//                        }
                         LoginActivity.this.runOnUiThread(new Runnable() {
                             public void run() {
                                 String login_success = getString(R.string.login_success);
@@ -106,5 +133,12 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
             //TODO support other local login methods? see second half of
             // https://proandroiddev.com/5-steps-to-implement-biometric-authentication-in-android-dbeb825aeee8
         }
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        final String email = ((EditText)findViewById(R.id.email)).getText().toString();
+        FIDO2Utils.onActivityResult(requestCode, resultCode, data, email, this);
     }
 }

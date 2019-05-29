@@ -3,10 +3,18 @@ from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from .models import Courier
 from pywarp.util import b64_encode, b64url_decode
+from pywarp.util.compat import token_bytes
 from pywarp import RelyingPartyManager, Credential
 from .FIDO2_utils import customVerify, customRegister
 from .backend import MyDBBackend
 import json
+import time
+
+
+#TODO Move from session_keys to JSON Web Tokens(JWT)
+
+def generate_key(seconds_valid):
+    return b64_encode(token_bytes(32)) + "," + str(time.time() + seconds_valid).split(".")[0]
 
 rp_id = "tg0.uk:49300"  # This must match the origin domain of your app, as seen by the browser.
 rp = RelyingPartyManager("GPIG A", rp_id=rp_id, credential_storage_backend=MyDBBackend())
@@ -27,11 +35,14 @@ def register(request):
     return HttpResponse(json.dumps(result), content_type="application/json")
 
 def get_authentication_options(request):
-    opts = rp.get_authentication_options(email=request.GET.get('courier_email'))
-    opts['challenge'] = b64_encode(opts['challenge'])
-    opts['rpId'] = rp_id
-    print(opts)
-    return HttpResponse(json.dumps(opts), content_type="application/json")
+    try:
+        opts = rp.get_authentication_options(email=request.GET.get('courier_email'))
+        opts['challenge'] = b64_encode(opts['challenge'])
+        opts['rpId'] = rp_id
+        print(opts)
+        return HttpResponse(json.dumps(opts), content_type="application/json")
+    except Courier.DoesNotExist as e:
+        return HttpResponse(json.dumps({'errorID':1,'reason':'Courier not found'}), content_type="application/json")
 
 
 @csrf_exempt #TODO: This should be removed and proper CSRFs used
@@ -41,6 +52,15 @@ def authenticate(request):
     signature = b64url_decode(request.POST.get('signature'))
     email = request.POST.get('courier_email').encode('utf-8')
     result = customVerify(rp, authenticator_data=authenticator_data, client_data_json=client_data_json, signature=signature, email=email)
+    if 'check_in' in request.POST:
+        print(request.POST.get('check_in'))
+    if result["verified"]:
+        session_key = generate_key(60*60*24) # valid for 24H
+        result['session_key'] = session_key
+        rp.storage_backend.save_session_key(email.decode(), session_key)
+        one_time_key = generate_key(60) # valid for 1 minute
+        result['one_time_key'] = one_time_key
+        rp.storage_backend.save_one_time_key(email.decode(), one_time_key)
     return HttpResponse(json.dumps(result), content_type="application/json")
 
 def assetlinks(request):

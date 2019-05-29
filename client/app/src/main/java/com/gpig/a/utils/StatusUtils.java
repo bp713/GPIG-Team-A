@@ -40,6 +40,10 @@ public final class StatusUtils {
     public static boolean isNetworkAvailable(Activity act) {
         ConnectivityManager connectivityManager
                 = (ConnectivityManager) act.getSystemService(Context.CONNECTIVITY_SERVICE);
+        return isNetworkAvailable(connectivityManager);
+    }
+
+    public static boolean isNetworkAvailable(ConnectivityManager connectivityManager) {
         NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
         return activeNetworkInfo != null && activeNetworkInfo.isConnected();
     }

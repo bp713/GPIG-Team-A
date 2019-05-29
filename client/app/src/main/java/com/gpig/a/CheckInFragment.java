@@ -96,13 +96,13 @@ public class CheckInFragment extends Fragment implements View.OnClickListener {
     public void onClick(View v) {
         if(v.getId() == R.id.check_in_button){
             FIDO2Utils fu = new FIDO2Utils(getActivity());
-            fu.sign(MainActivity.username);
+            fu.sign(MainActivity.email);
         }else if(v.getId() == R.id.register_button){
             FIDO2Utils fu = new FIDO2Utils(getActivity());
-            fu.register(MainActivity.username);
+            fu.register(MainActivity.email);
         }else if(v.getId() == R.id.verify){
             FIDO2Utils fu = new FIDO2Utils(getActivity());
-            fu.sign(MainActivity.username);
+            fu.sign(MainActivity.email);
         }
     }
 }

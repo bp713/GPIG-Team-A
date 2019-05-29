@@ -21,7 +21,15 @@
         android:theme="@style/AppTheme"
         android:usesCleartextTraffic="true"
         tools:ignore="GoogleAppIndexingWarning">
-        <meta-data android:name="asset_statements" android:resource="@string/asset_statements" />
+        <receiver
+            android:name=".PollServer"
+            android:enabled="true"
+            android:exported="true"/>
+
+        <meta-data
+            android:name="asset_statements"
+            android:resource="@string/asset_statements" />
+
         <activity
             android:name=".LoginActivity"
             android:screenOrientation="portrait">
@@ -31,7 +39,6 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-
         <activity
             android:name=".MainActivity"
             android:screenOrientation="portrait"

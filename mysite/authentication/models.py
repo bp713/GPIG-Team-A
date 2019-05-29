@@ -9,4 +9,5 @@ class Courier(models.Model):
     cred_pub_key = models.BinaryField()
     registration_challenge = models.CharField(max_length = 50, default = '')
     authentication_challenge = models.CharField(max_length = 50, default = '')
-    session_key = models.CharField(max_length = 50, default = '')
+    session_key = models.CharField(max_length = 70, default = '')
+    one_time_key = models.CharField(max_length = 70, default = '')
