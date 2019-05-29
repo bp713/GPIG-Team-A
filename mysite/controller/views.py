@@ -22,7 +22,7 @@ def controller(request, controller_id):
             point1 = '%s,%s' %(start_lat,start_long)
             point2 = '%s,%s' %(end_lat,end_long)
             assign_route(courier_id, point1, point2)
-            return HttpResponseRedirect('/route/' + str(controller_id))
+            return HttpResponseRedirect('couriers/')
     else:
         form = RouteForm()
     context = { 'controller' : controller, 'form': form}
@@ -33,6 +33,10 @@ def route(request):
     data = json.load(json_file)
     return HttpResponse(json.dumps(data), content_type="application/json")
 
+def couriers(request, controller_id):
+    controller = get_object_or_404(Controller, pk=controller_id)
+    context = { 'controller' : controller}
+    return render(request, 'controller/couriers.html', context)
 
 def routeCalc(request):
     lang1 = 1
