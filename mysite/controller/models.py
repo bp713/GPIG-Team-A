@@ -20,10 +20,12 @@ class Route(models.Model):
         on_delete=models.CASCADE,
         primary_key=True,
     )
+    length = models.IntegerField(default=0)
+    current = models.IntegerField(default=0) 
 
 
 class RouteComponent(models.Model):
     route = models.ForeignKey(Route, on_delete=models.CASCADE)
-    json = models.TextField()
-    position = models.IntegerField()
+    json = models.TextField(default='')
+    position = models.IntegerField(default=0)
 

@@ -7,13 +7,21 @@ from django.conf import settings
 import django
 import json
 import controller.Routetest as rt
+from controller.assign_route import assign_route
 
 def controller(request, controller_id):
     controller = get_object_or_404(Controller, pk=controller_id)
     if request.method == 'POST':
         form = RouteForm(request.POST)
         if form.is_valid():
-            
+            start_long = form.cleaned_data['start_long']
+            start_lat = form.cleaned_data['start_lat']
+            end_long = form.cleaned_data['end_long']
+            end_lat = form.cleaned_data['end_lat']
+            courier_id = form.cleaned_data['courier_id']
+            point1 = '%s,%s' %(start_lat,start_long)
+            point2 = '%s,%s' %(end_lat,end_long)
+            assign_route(courier_id, point1, point2)
             return HttpResponseRedirect('/route/' + str(controller_id))
     else:
         form = RouteForm()
