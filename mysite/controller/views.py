@@ -70,12 +70,13 @@ def update(request, lattitude, longitude, courier_id):
     courier.longitude = longitude
     courier.save()
     if courier.route_ready:
-        old_comp = RouteComponent.objects.filter(route=route, position=0).delete()
         route = courier.route
-        first_stage =  RouteComponent.objects.filter(route=route, position=1)
-        first_point = first_stage['paths']['coordinates'][0]
+        old_comp = RouteComponent.objects.filter(route=route, position=0).delete()
+        first_stage = RouteComponent.objects.filter(route=route, position=1)[0].json
+        first_stage = json.loads(first_stage)
+        first_point = first_stage['paths'][0]['points']['coordinates'][0]
         point1 = '%s,%s' %(lattitude,longitude)
-        first_comp_json = rt.makeroute([point1, first_point])
+        first_comp_json = rt.makeroute([point1, first_point], rt.key, rt.maxtraveltime)
         comp = RouteComponent(route=route, position = 0)
         comp.save()
         return HttpResponse('True')

@@ -9,7 +9,7 @@ from .breakuproute import break_up_route
 api_instance = swagger_client.RoutingApi()
 point = ['51.51456185,-0.03501226201922958','53.4794892,-2.2451148'] # list[str] | Specify multiple points for which the route should be calculated. The order is important. Specify at least two points.
 points_encoded = False # bool | IMPORTANT- TODO - currently you have to pass false for the swagger client - Have not found a way to force add a parameter. If `false` the coordinates in `point` and `snapped_waypoints` are returned as array using the order [lon,lat,elevation] for every point. If `true` the coordinates will be encoded as string leading to less bandwith usage. You'll need a special handling for the decoding of this string on the client-side. We provide open source code in [Java](https://github.com/graphhopper/graphhopper/blob/d70b63660ac5200b03c38ba3406b8f93976628a6/web/src/main/java/com/graphhopper/http/WebHelper.java#L43) and [JavaScript](https://github.com/graphhopper/graphhopper/blob/d70b63660ac5200b03c38ba3406b8f93976628a6/web/src/main/webapp/js/ghrequest.js#L139). It is especially important to use no 3rd party client if you set `elevation=true`!
-key = 'c9233b36-a5f6-4e05-a0e7-f1f8447f1cbb' # str | Get your key at graphhopper.com
+key = '0435eec9-ae8e-431c-b207-f748944e0a19' # str | Get your key at graphhopper.com
 locale = 'locale_example' # str | The locale of the resulting turn instructions. E.g. `pt_PT` for Portuguese or `de` for German (optional)
 instructions = True # bool | If instruction should be calculated and returned (optional)
 vehicle = 'car' # str | The vehicle for which the route should be calculated. Other vehicles are foot, small_truck, ... (optional)
