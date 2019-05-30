@@ -1,15 +1,12 @@
 package com.gpig.a.utils;
 
 import android.app.Activity;
-import android.app.NotificationManager;
-import android.content.Context;
 import android.content.Intent;
 import android.content.IntentSender;
-import android.net.ConnectivityManager;
+import android.location.Location;
 import android.os.AsyncTask;
 import android.util.Base64;
 import android.util.Log;
-import android.widget.EditText;
 import android.widget.Toast;
 
 import com.google.android.gms.fido.Fido;
@@ -31,7 +28,6 @@ import com.google.android.gms.fido.fido2.api.common.PublicKeyCredentialUserEntit
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.gpig.a.PollServer;
-import com.gpig.a.R;
 import com.gpig.a.settings.Settings;
 
 import org.json.JSONArray;
@@ -44,10 +40,10 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 
 import static android.app.Activity.RESULT_CANCELED;
 import static android.app.Activity.RESULT_OK;
-import static android.content.Context.NOTIFICATION_SERVICE;
 
 
 public final class FIDO2Utils {
@@ -67,9 +63,12 @@ public final class FIDO2Utils {
     }
 
     public void sign(String email) {
-        String serverOptions = ServerUtils.getFromServer("authentication/getAuthenticationOptions/?courier_email=" + email);
+
+        AsyncTask<String, String, String> serverTask = ServerUtils.getFromServer("authentication/getAuthenticationOptions/?courier_email=" + email);
         JSONObject options;
+        String serverOptions = "";
         try {
+            serverOptions = serverTask.get();
             options = new JSONObject(serverOptions);
             PublicKeyCredentialRequestOptions.Builder builder =
                     new PublicKeyCredentialRequestOptions.Builder();
@@ -100,6 +99,10 @@ public final class FIDO2Utils {
         } catch (JSONException e) {
             e.printStackTrace();
             Toast.makeText(activity.getApplicationContext(), "Failed: " + serverOptions, Toast.LENGTH_LONG).show();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (ExecutionException e) {
+            e.printStackTrace();
         }
     }
 
@@ -130,22 +133,33 @@ public final class FIDO2Utils {
             data += "&signature=" + Base64.encodeToString(response.getSignature(), Base64.URL_SAFE);
             data += "&courier_email=" + URLEncoder.encode(email, "UTF-8");
             if(StatusUtils.canCheckIn(activity)){
-                data += "&check_in=" + StatusUtils.getLastKnownLocation(activity).toString();
+                Location location = StatusUtils.getLastKnownLocation(activity, true);
+                if(location != null)
+                    data += "&check_in=" + location.getLatitude() + "," + location.getLongitude();
             }
             AsyncTask<String, String, String> task = ServerUtils.postToServer("authentication/authenticate/", data);
-            String result = task.get(); //TODO extract and save session key or next route?
+            String result = task.get();
             JSONObject options = new JSONObject(result);
             if(options.getBoolean("verified")) {
                 Settings.SessionKey = options.getString("session_key");
+                Settings.userID = options.getString("user_id");
                 Settings.writeToFile(activity);
-                ServerUtils.pollServer = new PollServer();
+//                ServerUtils.pollServer = new PollServer();
                 ServerUtils.pollServer.setAlarm(activity.getApplicationContext());
-                if(StatusUtils.canCheckIn(activity)) {
+                if(StatusUtils.canCheckIn(activity) || StatusUtils.hasNewRoute(activity)) {
                     data = "one_time_key=" + options.getString("one_time_key");
-                    data += "&check_in=" + StatusUtils.getLastKnownLocation(activity).toString();
-                    task = ServerUtils.postToServer("checkin/", data);
+                    Location location = StatusUtils.getLastKnownLocation(activity, true);
+                    assert location != null;
+                    AsyncTask<String, String, String> updateTask = ServerUtils.getFromServer("controller/update/" + location.getLatitude() + "/" + location.getLongitude() + "/" + Settings.userID + "/");
+                    updateTask.get();//make sure the server has current location
+                    data += "&check_in=" + location.getLatitude() + "," + location.getLongitude();
+                    task = ServerUtils.postToServer("controller/checkin/" + Settings.userID + "/", data);
+                    String json = task.get();
+                    PollServer.areUpdatesAvailable = false;
+                    if (RouteUtils.hasRouteChanged(activity, RouteUtils.routeFilename, json)) {
+                        FileUtils.writeToInternalStorage(activity, RouteUtils.routeFilename, json);
+                    }
                 }
-                Log.i(TAG, "sendVerifyCompleteToClient: " + result);
             }else{
                 Toast.makeText(activity.getApplicationContext(), "Verification Failed! Is your email correct?", Toast.LENGTH_SHORT).show();
             }
@@ -155,9 +169,12 @@ public final class FIDO2Utils {
     }
 
     public void register(String email) {
-        String serverOptions = ServerUtils.getFromServer("authentication/getRegistrationOptions/?courier_email=" + email);
+
+        AsyncTask<String, String, String> serverTask = ServerUtils.getFromServer("authentication/getRegistrationOptions/?courier_email=" + email);
         JSONObject options;
+        String serverOptions = "";
         try {
+            serverOptions = serverTask.get();
             options = new JSONObject(serverOptions);
             PublicKeyCredentialCreationOptions.Builder builder =
                     new PublicKeyCredentialCreationOptions.Builder();
@@ -227,6 +244,10 @@ public final class FIDO2Utils {
         } catch (JSONException e) {
             e.printStackTrace();
         } catch (Attachment.UnsupportedAttachmentException e) {
+            e.printStackTrace();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (ExecutionException e) {
             e.printStackTrace();
         }
     }

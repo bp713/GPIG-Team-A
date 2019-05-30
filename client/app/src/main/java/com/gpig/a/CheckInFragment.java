@@ -16,6 +16,8 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.gpig.a.utils.FIDO2Utils;
+import com.gpig.a.utils.FileUtils;
+import com.gpig.a.utils.RouteUtils;
 import com.gpig.a.utils.StatusUtils;
 
 //TODO: check conditions and update check in display
@@ -76,6 +78,11 @@ public class CheckInFragment extends Fragment implements View.OnClickListener {
         }else{
             locationCorrectIcon.setImageDrawable(ContextCompat.getDrawable(getContext(),R.drawable.ic_error_outline));
             locationCorrectText.setText(R.string.check_in_location_incorrect);
+        }
+
+        if(StatusUtils.hasNewRoute(getActivity())){
+            checkInButton.setEnabled(true);
+            return v;
         }
 
         if(StatusUtils.canCheckIn(getActivity())){

@@ -69,7 +69,6 @@ public class MapFragment extends Fragment {
     private float[] gravity = null;
     private float[] geomagnetic = null;
 
-    private String filename = "Route.json";
     private String json = null;
     private RouteCourierTask routeCourierTask = null;
     private RouteFromUrlTask routeFromUrlTask = null;
@@ -182,54 +181,54 @@ public class MapFragment extends Fragment {
             }
         }));
 
-        if (StatusUtils.isNetworkAvailable(getActivity())) {
-
-            routeFromUrlTask = new RouteFromUrlTask(new RouteFromUrlTask.AsyncResponse() {
-
-                @Override
-                public void processFinish(String output) {
-                    json = output;
-
-                    if (json == null || json.isEmpty()){
-                        if (FileUtils.doesFileExist(getActivity(), filename)){
-                            json = FileUtils.readFromInternalStorage(getActivity(), filename);
-                            routeCourierTask.execute(json);
-                        }
-                        else {
-                            Log.e(TAG, "Failed to connect to server and no route downloaded");
-                            AlertDialog.Builder alert = new AlertDialog.Builder(getContext());
-                            alert.setTitle("Failed to connect to server");
-                            alert.setMessage("Please try to connect to the server to download a route");
-                            alert.setPositiveButton("OK", null);
-                            alert.show();
-                        }
-                    }
-                    else {
-                        // if the route is different from the one stored then update it
-                        if (RouteUtils.hasRouteChanged(getActivity(), filename, json)) {
-                            FileUtils.writeToInternalStorage(getActivity(), filename, json);
-                        }
-                        routeCourierTask.execute(json);
-                    }
-                }
-            });
-
-            routeFromUrlTask.execute(Settings.getUrlFromSettings(getActivity()));
-        }
-        else {
-            if (FileUtils.doesFileExist(getActivity(), filename)) {
-                json = FileUtils.readFromInternalStorage(getActivity(), filename);
+//        if (StatusUtils.isNetworkAvailable(getActivity())) {
+//
+//            routeFromUrlTask = new RouteFromUrlTask(new RouteFromUrlTask.AsyncResponse() {
+//
+//                @Override
+//                public void processFinish(String output) {
+//                    json = output;
+//
+//                    if (json == null || json.isEmpty()){
+//                        if (FileUtils.doesFileExist(getActivity(), RouteUtils.routeFilename)){
+//                            json = FileUtils.readFromInternalStorage(getActivity(), RouteUtils.routeFilename);
+//                            routeCourierTask.execute(json);
+//                        }
+//                        else {
+//                            Log.e(TAG, "Failed to connect to server and no route downloaded");
+//                            AlertDialog.Builder alert = new AlertDialog.Builder(getContext());
+//                            alert.setTitle("Failed to connect to server");
+//                            alert.setMessage("Please try to connect to the server to download a route");
+//                            alert.setPositiveButton("OK", null);
+//                            alert.show();
+//                        }
+//                    }
+//                    else {
+//                        // if the route is different from the one stored then update it
+//                        if (RouteUtils.hasRouteChanged(getActivity(), RouteUtils.routeFilename, json)) {
+//                            FileUtils.writeToInternalStorage(getActivity(), RouteUtils.routeFilename, json);
+//                        }
+//                        routeCourierTask.execute(json);
+//                    }
+//                }
+//            });
+//
+//            routeFromUrlTask.execute(Settings.getUrlFromSettings(getActivity()));
+//        }
+//        else {
+            if (FileUtils.doesFileExist(getActivity(), RouteUtils.routeFilename)) {
+                json = FileUtils.readFromInternalStorage(getActivity(), RouteUtils.routeFilename);
                 routeCourierTask.execute(json);
             } else {
                 // display a popup saying connect to the internet?
-                Log.e(TAG, "No internet and no route downloaded");
+                Log.e(TAG, "No route downloaded");
                 AlertDialog.Builder alert = new AlertDialog.Builder(getContext());
                 alert.setTitle("No route downloaded");
-                alert.setMessage("Please connect to the internet to download a route");
+                alert.setMessage("Please connect to the internet and check in to download a route");
                 alert.setPositiveButton("OK", null);
                 alert.show();
             }
-        }
+//        }
     }
 
     @Override

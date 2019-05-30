@@ -24,43 +24,17 @@ public final class ServerUtils {
     public static PollServer pollServer;
 
     public static AsyncTask<String, String, String> postToServer(String path, String data){
-        return new CallAPI().execute("https://" + Settings.ServerIP + ":" + Settings.ServerPort + "/" + path, data);
+        return new POSTAPI().execute("https://" + Settings.ServerIP + ":" + Settings.ServerPort + "/" + path, data);
     }
 
-    public static String getFromServer(String path) {
+    public static AsyncTask<String, String, String> getFromServer(String path) {
         String serverUrl = "https://" + Settings.ServerIP + ":" + Settings.ServerPort + "/" + path;
-        StringBuilder result = new StringBuilder();
-        try {
-            URL url = new URL(serverUrl);
-            HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
-            urlConnection.setConnectTimeout(3000);
-            try {
-                InputStream in = urlConnection.getInputStream();
-                BufferedReader reader = new BufferedReader(new InputStreamReader(in));
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    result.append(line);
-                }
-                in.close();
-                reader.close();
-            } finally {
-                urlConnection.disconnect();
-            }
-        } catch (FileNotFoundException ex) {
-            ex.printStackTrace();
-            Log.e(TAG, ex.toString());
-            return "True";
-        } catch (IOException ex) {
-            ex.printStackTrace();
-            Log.e(TAG, ex.toString());
-        }
-
-        return result.toString();
+        return new GETAPI().execute(serverUrl);
     }
 
-    static class CallAPI extends AsyncTask<String, String, String> {
+    static class POSTAPI extends AsyncTask<String, String, String> {
 
-        CallAPI() {
+        POSTAPI() {
             //set context variables if required
         }
 
@@ -105,6 +79,50 @@ public final class ServerUtils {
                 e.printStackTrace();
             }
             Log.d(TAG, "POST Done: " + result.toString());
+            return result.toString();
+        }
+    }
+
+    static class GETAPI extends AsyncTask<String, String, String> {
+
+        GETAPI() {
+            //set context variables if required
+        }
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+        }
+
+        @Override
+        protected String doInBackground(String... params) {
+            String urlString = params[0];
+            StringBuilder result = new StringBuilder();
+            try {
+                URL url = new URL(urlString);
+                HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
+                urlConnection.setConnectTimeout(3000);
+                try {
+                    InputStream in = urlConnection.getInputStream();
+                    BufferedReader reader = new BufferedReader(new InputStreamReader(in));
+                    String line;
+                    while ((line = reader.readLine()) != null) {
+                        result.append(line);
+                    }
+                    in.close();
+                    reader.close();
+                } finally {
+                    urlConnection.disconnect();
+                }
+            } catch (FileNotFoundException ex) {
+                ex.printStackTrace();
+                Log.e(TAG, ex.toString());
+                return "True";
+            } catch (IOException ex) {
+                ex.printStackTrace();
+                Log.e(TAG, ex.toString());
+            }
+
             return result.toString();
         }
     }

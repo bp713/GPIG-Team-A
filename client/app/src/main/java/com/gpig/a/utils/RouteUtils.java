@@ -12,6 +12,7 @@ import java.net.URL;
 public final class RouteUtils {
 
     private static final String TAG = "RouteUtils";
+    public static final String routeFilename = "Route.json";
 
     private RouteUtils(){}
 

@@ -7,7 +7,9 @@ import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.location.Location;
 import android.net.ConnectivityManager;
+import android.os.AsyncTask;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -17,31 +19,44 @@ import com.gpig.a.utils.ServerUtils;
 import com.gpig.a.utils.StatusUtils;
 
 import java.io.FileNotFoundException;
+import java.util.concurrent.ExecutionException;
 
 public class PollServer extends BroadcastReceiver {
     public static final String TAG = "PollServer";
-    public boolean areUpdatesAvailable = false;
+    public static boolean areUpdatesAvailable = false;
 
     @Override
     public void onReceive(Context context, Intent intent)
     {//TODO notifications fail to show
-        Log.i(TAG, "onReceive: ");
-        if(Settings.SessionKey.equals("") || Integer.parseInt(Settings.SessionKey.split(",")[1]) > System.currentTimeMillis()/1000){
+        Log.d(TAG, "onReceive: ");
+        if(Settings.SessionKey.equals("") || Integer.parseInt(Settings.SessionKey.split(",")[1]) < System.currentTimeMillis()/1000){
             // if there is no session key or it has expired then cancel the alarm
             NotificationUtils.notify(context, "Not Receiving Updates", "Please login to check for new updates");
             this.cancelAlarm(context);
+            Log.d(TAG, "onReceive: no session key or it has expired: " + Settings.SessionKey);
+            Log.d(TAG, "onReceive: Current time: " + System.currentTimeMillis()/1000);
+            return;
         }
         //TODO check for network
 //        if(!StatusUtils.isNetworkAvailable()){
 //            // no network so cant poll
 //            return;
 //        }
-        String updates = ServerUtils.getFromServer("route/updates?session_key=" + Settings.SessionKey);
-        if (updates.contains("True")) {//TODO handle updates
-            areUpdatesAvailable = true;
-            NotificationUtils.notify(context, "Updates Available", "New updates are available sign into the app for more detail");
-            // Put here YOUR code.
-            Toast.makeText(context, updates, Toast.LENGTH_LONG).show();
+        Location location = StatusUtils.getLastKnownLocation(context, false);
+        AsyncTask<String, String, String> updateTask = ServerUtils.getFromServer("controller/update/" + location.getLatitude() + "/" + location.getLongitude() + "/" + Settings.userID + "/");
+        try {
+            String updates = updateTask.get();
+            Log.d(TAG, "onReceive: " + updates);
+            if (updates.contains("True")) {
+                areUpdatesAvailable = true;
+                NotificationUtils.notify(context, "Updates Available", "New updates are available sign into the app for more detail");
+                Toast.makeText(context, "Updates Available", Toast.LENGTH_LONG).show();
+                Log.d(TAG, "onReceive: " + updates);
+            }
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
         }
     }
 

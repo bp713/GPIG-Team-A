@@ -13,6 +13,7 @@ import com.gpig.a.settings.Settings;
 import com.gpig.a.utils.BiometricCallback;
 import com.gpig.a.utils.BiometricUtils;
 import com.gpig.a.utils.FIDO2Utils;
+import com.gpig.a.utils.ServerUtils;
 
 public class LoginActivity extends AppCompatActivity implements View.OnClickListener {
 
@@ -26,6 +27,8 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
         b.setOnClickListener(this);
         //load settings from file
         Settings.readFromFile(this);
+        ServerUtils.pollServer = new PollServer();
+        ServerUtils.pollServer.setAlarm(this.getApplicationContext());
     }
 
     @Override
