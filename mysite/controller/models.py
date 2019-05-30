@@ -12,6 +12,7 @@ class Courier(models.Model):
     location = models.CharField(max_length = 50, default = '')
     longitude = models.FloatField(default=0)
     latitude = models.FloatField(default=0)
+    route_ready = models.BooleanField(default=False)
 
 
 class Route(models.Model):

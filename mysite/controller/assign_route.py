@@ -4,13 +4,19 @@ from controller.breakuproute import break_up_route
 def assign_route(courier_id, start_point, end_point):
     courier = Courier.objects.filter(id=courier_id)[0]
     old_route = Route.objects.filter(courier=courier).delete()
+    courier.route_ready = True
+    courier.save()
     route = rt.makeroute([start_point, end_point], rt.key, rt.maxtraveltime)
-    sections = break_up_route(route, 36000000)
-    routeDB = Route(courier=courier, length= len(sections), current=0)
+    sections = [start_point]
+    for section in break_up_route(route, rt.maxtraveltime):
+        sections.append(section)
+    sections.append(end_point)   
+    routeDB = Route(courier=courier, length= len(sections)-1, current=-1)
     routeDB.save()
     full = RouteComponent(route=routeDB, json=route, position=-1)
     full.save()
-    for i in range(len(sections)):
-        component = RouteComponent(route=routeDB, json=sections[i], position=i)
+    for i in range(len(sections)-1):
+        compjson = rt.makeroute([sections[i], sections[i+1]],  rt.key, rt.maxtraveltime)
+        component = RouteComponent(route=routeDB, json=compjson, position=i+1)
         component.save()
 

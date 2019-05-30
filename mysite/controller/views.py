@@ -1,6 +1,6 @@
 from django.shortcuts import  get_object_or_404, render
 from django.http import HttpResponse, HttpResponseRedirect
-from .models import Controller, Route, RouteComponent
+from .models import Controller, Route, RouteComponent, Courier
 from .forms import RouteForm
 import os
 from django.conf import settings
@@ -49,4 +49,36 @@ def routeCalc(request):
     points = [point1, point2]
     
     rt.makeroute(rt.point, rt.key, rt.maxtraveltime)
+
+def checkin(request, courier_id):
+    courier = get_object_or_404(Courier, pk=courier_id)
+    route = courier.route
+    if route.length == route.current:
+        route.delete()
+        courier.route_ready = False
+        courier.save()
+        return HttpResponse('no route')
+    else:
+        route.current += 1
+        route.save()
+        comp = RouteComponent.objects.filter(route=route, position=route.current)[0]
+        return HttpResponse(json.dumps(comp.json), content_type="application/json")
+
+def update(request, lattitude, longitude, courier_id):
+    courier = get_object_or_404(Courier, pk=courier_id)
+    courier.lattitude = lattitude
+    courier.longitude = longitude
+    courier.save()
+    if courier.route_ready:
+        old_comp = RouteComponent.objects.filter(route=route, position=0).delete()
+        route = courier.route
+        first_stage =  RouteComponent.objects.filter(route=route, position=1)
+        first_point = first_stage['paths']['coordinates'][0]
+        point1 = '%s,%s' %(lattitude,longitude)
+        first_comp_json = rt.makeroute([point1, first_point])
+        comp = RouteComponent(route=route, position = 0)
+        comp.save()
+        return HttpResponse('True')
+    else:
+        return HttpResponse('False')
 
