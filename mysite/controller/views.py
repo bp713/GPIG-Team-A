@@ -72,7 +72,7 @@ def checkin(request, courier_id):
         route.current += 1
         route.save()
         comp = RouteComponent.objects.filter(route=route, position=route.current)[0]
-        return HttpResponse(json.dumps(comp.json), content_type="application/json")
+        return HttpResponse(comp.json, content_type="application/json")
 
 def update(request, lattitude, longitude, courier_id):
     courier = get_object_or_404(Courier, pk=courier_id)
@@ -90,7 +90,7 @@ def update(request, lattitude, longitude, courier_id):
         point1 = '%s,%s' %(lattitude,longitude)
         first_point_string = '%s,%s' %(first_point[1],first_point[0])
         first_comp_json = rt.makeroute([point1, first_point_string], rt.key, rt.maxtraveltime)
-        comp = RouteComponent(route=route, position = 0, json=first_comp_json)
+        comp = RouteComponent(route=route, position = 0, json=json.dumps(first_comp_json))
         comp.save()
         return HttpResponse('True')
     else:
