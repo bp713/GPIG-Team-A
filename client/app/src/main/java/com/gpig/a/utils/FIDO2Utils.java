@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.content.IntentSender;
 import android.location.Location;
 import android.os.AsyncTask;
+import android.support.v4.app.FragmentTransaction;
 import android.util.Base64;
 import android.util.Log;
 import android.widget.Toast;
@@ -27,7 +28,9 @@ import com.google.android.gms.fido.fido2.api.common.PublicKeyCredentialType;
 import com.google.android.gms.fido.fido2.api.common.PublicKeyCredentialUserEntity;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
+import com.gpig.a.MainActivity;
 import com.gpig.a.PollServer;
+import com.gpig.a.R;
 import com.gpig.a.settings.Settings;
 
 import org.json.JSONArray;
@@ -126,7 +129,7 @@ public final class FIDO2Utils {
                 });
     }
 
-    public static void sendVerifyCompleteToClient(AuthenticatorAssertionResponse response, String email, Activity activity) {
+    public static void sendVerifyCompleteToClient(AuthenticatorAssertionResponse response, String email, MainActivity activity) {
         try {
             String data = "authenticator_data=" + Base64.encodeToString(response.getAuthenticatorData(), Base64.URL_SAFE);
             data += "&client_data_json=" + new String(response.getClientDataJSON(), StandardCharsets.UTF_8);
@@ -159,6 +162,7 @@ public final class FIDO2Utils {
                     if (RouteUtils.hasRouteChanged(activity, RouteUtils.routeFilename, json)) {
                         FileUtils.writeToInternalStorage(activity, RouteUtils.routeFilename, json);
                     }
+                    activity.switchToMap();
                 }
             }else{
                 Toast.makeText(activity.getApplicationContext(), "Verification Failed! Is your email correct?", Toast.LENGTH_SHORT).show();
@@ -284,7 +288,7 @@ public final class FIDO2Utils {
         }
     }
 
-    public static void onActivityResult(int requestCode, int resultCode, Intent data, String email, Activity activity) {
+    public static void onActivityResult(int requestCode, int resultCode, Intent data, String email, MainActivity activity) {
         switch (resultCode) {
             case RESULT_OK:
                 if (data.hasExtra(Fido.FIDO2_KEY_ERROR_EXTRA)) {

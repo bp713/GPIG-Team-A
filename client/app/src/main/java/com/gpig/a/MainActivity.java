@@ -57,12 +57,16 @@ public class MainActivity extends AppCompatActivity
 
         // Obtain the SupportMapFragment and get notified when the fragment_map is ready to be used.
         mapFragment = new MapFragment();
+        switchToMap();
+    }
+
+    public void switchToMap(){
         final FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
         ft.replace(R.id.container, mapFragment, "MapFragment");
         ft.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE);
         ft.addToBackStack(null);
         ft.commit();
-
+        NavigationView navigationView = findViewById(R.id.nav_view);
         navigationView.getMenu().getItem(0).setChecked(true);
     }
 

@@ -133,11 +133,4 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
             // https://proandroiddev.com/5-steps-to-implement-biometric-authentication-in-android-dbeb825aeee8
         }
     }
-
-    @Override
-    public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        final String email = ((EditText)findViewById(R.id.email)).getText().toString();
-        FIDO2Utils.onActivityResult(requestCode, resultCode, data, email, this);
-    }
 }
