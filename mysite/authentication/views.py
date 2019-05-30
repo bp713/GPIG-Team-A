@@ -61,6 +61,7 @@ def authenticate(request):
         one_time_key = generate_key(60) # valid for 1 minute
         result['one_time_key'] = one_time_key
         rp.storage_backend.save_one_time_key(email.decode(), one_time_key)
+        result['user_id'] = rp.storage_backend.get_id_from_email(email.decode())
     return HttpResponse(json.dumps(result), content_type="application/json")
 
 def assetlinks(request):

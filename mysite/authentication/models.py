@@ -1,9 +1,11 @@
 from django.db import models
+from controller.models import Courier as ControllerCourier
 
 # Create your models here.
 
 
 class Courier(models.Model):
+    controller_model = models.ForeignKey(ControllerCourier, on_delete=models.CASCADE)
     email = models.CharField(max_length = 50)
     cred_id = models.BinaryField()
     cred_pub_key = models.BinaryField()

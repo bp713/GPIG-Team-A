@@ -1,6 +1,8 @@
 from pywarp import Credential
 from pywarp.backends import CredentialStorageBackend
 from .models import Courier
+from controller.models import Courier as ControllerCourier
+from controller.models import Controller
 
 
 class MyDBBackend(CredentialStorageBackend):
@@ -15,14 +17,9 @@ class MyDBBackend(CredentialStorageBackend):
                           credential_public_key=courier.cred_pub_key)
 
     def save_credential_for_user(self, email, credential):
-        try:
-            courier = Courier.objects.get(email=email)
-            courier.cred_id = credential.id
-            courier.cred_pub_key = credential.public_key.cbor_cose_key
-        except Exception as e:
-            courier = Courier(email=email,
-                cred_id = credential.id,
-                cred_pub_key = credential.public_key.cbor_cose_key)
+        courier = Courier.objects.get(email=email)
+        courier.cred_id = credential.id
+        courier.cred_pub_key = credential.public_key.cbor_cose_key
         courier.save()
 
     def save_challenge_for_user(self, email, challenge, type):
@@ -30,7 +27,9 @@ class MyDBBackend(CredentialStorageBackend):
         try:
             courier = Courier.objects.get(email=email)
         except Exception as e:
-            courier = Courier(email=email)
+            controller_model = ControllerCourier(controller=Controller.objects.get(pk=1))
+            controller_model.save()
+            courier = Courier(email=email, controller_model = controller_model)
         if type == "registration":
             courier.registration_challenge = challenge
         else:
@@ -41,6 +40,10 @@ class MyDBBackend(CredentialStorageBackend):
         courier = Courier.objects.get(email=email)
         courier.session_key = session_key
         courier.save()
+
+    def get_id_from_email(self, email):
+        courier = Courier.objects.get(email=email)
+        return courier.controller_model.pk
 
     def save_one_time_key(self, email, one_time_key):
         courier = Courier.objects.get(email=email)
