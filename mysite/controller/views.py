@@ -90,7 +90,7 @@ def update(request, lattitude, longitude, courier_id):
         point1 = '%s,%s' %(lattitude,longitude)
         first_point_string = '%s,%s' %(first_point[1],first_point[0])
         first_comp_json = rt.makeroute([point1, first_point_string], rt.key, rt.maxtraveltime)
-        comp = RouteComponent(route=route, position = 0)
+        comp = RouteComponent(route=route, position = 0, json=first_comp_json)
         comp.save()
         return HttpResponse('True')
     else:
