@@ -4,21 +4,15 @@ import android.content.Intent;
 import android.hardware.biometrics.BiometricPrompt;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
-import com.google.android.gms.fido.Fido;
-import com.google.android.gms.fido.fido2.api.common.AuthenticatorAssertionResponse;
-import com.google.android.gms.fido.fido2.api.common.AuthenticatorAttestationResponse;
-import com.google.android.gms.fido.fido2.api.common.AuthenticatorErrorResponse;
 import com.gpig.a.settings.Settings;
 import com.gpig.a.utils.BiometricCallback;
 import com.gpig.a.utils.BiometricUtils;
 import com.gpig.a.utils.FIDO2Utils;
-import com.gpig.a.utils.StatusUtils;
 
 public class LoginActivity extends AppCompatActivity implements View.OnClickListener {
 
@@ -30,6 +24,8 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
         setContentView(R.layout.activity_login);
         Button b = findViewById(R.id.login_button);
         b.setOnClickListener(this);
+        //load settings from file
+        Settings.readFromFile(this);
     }
 
     @Override

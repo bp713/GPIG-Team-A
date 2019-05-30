@@ -16,6 +16,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.LinearLayout;
+import android.widget.TextView;
 
 import com.gpig.a.settings.Settings;
 import com.gpig.a.settings.SettingsFragment;
@@ -51,8 +52,8 @@ public class MainActivity extends AppCompatActivity
         toggle.syncState();
         navigationView.setNavigationItemSelectedListener(this);
 
-        //load settings from file
-        Settings.readFromFile(this);
+        TextView emailText = navigationView.getHeaderView(0).findViewById(R.id.nav_email);
+        emailText.setText(email);
 
         // Obtain the SupportMapFragment and get notified when the fragment_map is ready to be used.
         mapFragment = new MapFragment();
