@@ -317,7 +317,7 @@ public class MapFragment extends Fragment {
                     SensorManager.getOrientation(R, orientation);
                     float azimut = orientation[0]; // orientation contains: azimut, pitch and roll
                     if (m!= null){
-                        float angle = (float) Math.toDegrees(azimut);
+                        float angle = 360-(float) Math.toDegrees(azimut);
                         if (angle > m.getRotation() + 10 || angle < m.getRotation() - 10 ) {
                             m.setRotation(angle);
                             mapView.invalidate();
