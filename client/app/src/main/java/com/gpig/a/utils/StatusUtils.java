@@ -119,7 +119,7 @@ public final class StatusUtils {
     }
 
     public static boolean hasNewRoute(Activity activity){
-        return PollServer.areUpdatesAvailable && !FileUtils.doesFileExist(activity, RouteUtils.routeFilename) && StatusUtils.isLocationAvailable(activity) == StatusUtils.LocationStatus.FOUND;
+        return PollServer.areUpdatesAvailable && StatusUtils.isLocationAvailable(activity) == StatusUtils.LocationStatus.FOUND;// && !FileUtils.doesFileExist(activity, RouteUtils.routeFilename)
     }
 
     public static boolean canCheckIn(Activity act) {

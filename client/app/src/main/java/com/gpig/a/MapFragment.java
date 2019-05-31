@@ -171,7 +171,12 @@ public class MapFragment extends Fragment {
 
                 sourceLocation = (GeoPoint) output[1];
                 destinationLocation = (GeoPoint) output[2];
-                mapView.zoomToBoundingBox(road.mBoundingBox, true, 175);
+                try {
+                    mapView.zoomToBoundingBox(road.mBoundingBox, true, 175);
+                }catch (IllegalArgumentException e){
+                    e.printStackTrace();
+                    Log.i(TAG, "processFinish: " + road.mBoundingBox);
+                }
                 Polyline roadOverlay = RoadManager.buildRoadOverlay(road);
                 mapView.getOverlays().add(roadOverlay);
 
@@ -277,7 +282,7 @@ public class MapFragment extends Fragment {
     public class MapLocationListener implements LocationListener {
 
         public void onLocationChanged(Location location) {
-            if (location != null) {
+            if (location != null && currentLocation != null) {
                 if (!(location.getLatitude() == currentLocation.getLatitude() && location.getLongitude() == currentLocation.getLongitude()) || currentLocation == null) {
                     currentLocation = new GeoPoint(location);
                     if (m != null) {
