@@ -18,8 +18,10 @@ Run the http debug server with `python3 manage.py runserver 0:8000`
 Run the https server with `./run.py`\
 requires:
  - eventlet (GitHub version)
-   - install via `pip3 install -U https://github.com/eventlet/eventlet/archive/master.zip --user`
  - django
-   - install via `pip3 install django --user`
- - pywarp
-   - install via `pip3 install -U https://github.com/pyauth/pywarp/archive/master.zip --user`
+ - pywarp (GitHub version)
+ - cbor2
+ - pandas
+ - numpy
+
+Run `pip3 install -r requirements.txt` to install the required packages
