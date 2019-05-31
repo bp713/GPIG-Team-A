@@ -93,6 +93,7 @@ public class MapFragment extends Fragment {
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
 
+        Configuration.getInstance().setUserAgentValue("com.gpig.a");
         Configuration.getInstance().load(getContext(),
                 PreferenceManager.getDefaultSharedPreferences(getContext()));
 
@@ -161,6 +162,9 @@ public class MapFragment extends Fragment {
             @Override
             public void processFinish(Object[] output) {
                 Road road = (Road) output[0];
+                if(road == null){
+                    return;
+                }
                 recyclerView = (RecyclerView) getActivity().findViewById(R.id.rv);
                 recylerViewLayoutManager = new LinearLayoutManager(getContext());
                 recyclerView.setLayoutManager(recylerViewLayoutManager);
@@ -288,9 +292,11 @@ public class MapFragment extends Fragment {
                     if (m != null) {
                         mapView.getOverlays().remove(m);
                     }
-                    m = MapUtils.createMarker(mapView, getContext(), "current", currentLocation);
-                    mapView.getOverlays().add(m);
-                    mapView.invalidate();
+                    if(getContext() != null) {
+                        m = MapUtils.createMarker(mapView, getContext(), "current", currentLocation);
+                        mapView.getOverlays().add(m);
+                        mapView.invalidate();
+                    }
                 }
             }
         }
@@ -364,8 +370,12 @@ public class MapFragment extends Fragment {
         @Override
         protected Object[] doInBackground(String... params) {
             MyGraphHopperRoadManager mgh = new MyGraphHopperRoadManager();
-            Road road = mgh.getRoads(params[0])[0];
-            return new Object[]{road, mgh.source, mgh.destination};
+            try {
+                Road road = mgh.getRoads(params[0])[0];
+                return new Object[]{road, mgh.source, mgh.destination};
+            }catch (ArrayIndexOutOfBoundsException e){
+                return new Object[]{null, null, null};
+            }
         }
 
         @Override

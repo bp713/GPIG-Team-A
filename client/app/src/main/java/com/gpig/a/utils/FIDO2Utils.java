@@ -129,6 +129,14 @@ public final class FIDO2Utils {
                 });
     }
 
+    /**
+     *  send verification data to the server:
+     *  if the server confirms the data is correct then save the session key and server ID and start polling the server for updates
+     *  if the data is correct and the user can check in or there is a new route then update the server with the current location and check in
+     * @param response
+     * @param email
+     * @param activity
+     */
     public static void sendVerifyCompleteToClient(AuthenticatorAssertionResponse response, String email, MainActivity activity) {
         try {
             String data = "authenticator_data=" + Base64.encodeToString(response.getAuthenticatorData(), Base64.URL_SAFE);
@@ -147,7 +155,6 @@ public final class FIDO2Utils {
                 Settings.SessionKey = options.getString("session_key");
                 Settings.userID = options.getString("user_id");
                 Settings.writeToFile(activity);
-//                ServerUtils.pollServer = new PollServer();
                 ServerUtils.pollServer.setAlarm(activity.getApplicationContext());
                 if(StatusUtils.canCheckIn(activity) || StatusUtils.hasNewRoute(activity)) {
                     data = "one_time_key=" + options.getString("one_time_key");
@@ -158,6 +165,12 @@ public final class FIDO2Utils {
                     data += "&check_in=" + location.getLatitude() + "," + location.getLongitude();
                     task = ServerUtils.postToServer("controller/checkin/" + Settings.userID + "/", data);
                     String json = task.get();
+                    if(json.equals("no route")){
+                        //TODO final destination screen
+                        Toast.makeText(activity.getApplicationContext(), "Route Completed!", Toast.LENGTH_LONG).show();
+
+                        return;
+                    }
                     PollServer.areUpdatesAvailable = false;
                     if (RouteUtils.hasRouteChanged(activity, RouteUtils.routeFilename, json)) {
                         FileUtils.writeToInternalStorage(activity, RouteUtils.routeFilename, json);
