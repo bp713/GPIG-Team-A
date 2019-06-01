@@ -12,7 +12,7 @@ import android.widget.Toast;
 import com.gpig.a.settings.Settings;
 import com.gpig.a.utils.BiometricCallback;
 import com.gpig.a.utils.BiometricUtils;
-import com.gpig.a.utils.FIDO2Utils;
+import com.gpig.a.utils.NotificationUtils;
 import com.gpig.a.utils.ServerUtils;
 
 public class LoginActivity extends AppCompatActivity implements View.OnClickListener {
@@ -22,6 +22,7 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        NotificationUtils.createNotificationChannel(this);
         setContentView(R.layout.activity_login);
         Button b = findViewById(R.id.login_button);
         b.setOnClickListener(this);
@@ -90,8 +91,8 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
                     public void onAuthenticationHelp(int helpCode, final CharSequence helpString) {
                         LoginActivity.this.runOnUiThread(new Runnable() {
                             public void run() {
-                                String welcome = getString(R.string.login_help) + helpString;
-                                Toast.makeText(LoginActivity.this, welcome, Toast.LENGTH_LONG).show();
+                                String help = getString(R.string.login_help) + helpString;
+                                Toast.makeText(LoginActivity.this, help, Toast.LENGTH_LONG).show();
                             }
                         });
                     }
@@ -100,8 +101,8 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
                     public void onAuthenticationError(int errorCode, final CharSequence errString) {
                         LoginActivity.this.runOnUiThread(new Runnable() {
                             public void run() {
-                                String welcome = getString(R.string.login_error) + errString;
-                                Toast.makeText(LoginActivity.this, welcome, Toast.LENGTH_LONG).show();
+                                String error = getString(R.string.login_error) + errString;
+                                Toast.makeText(LoginActivity.this, error, Toast.LENGTH_LONG).show();
                             }
                         });
                     }
@@ -110,8 +111,8 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
                     public void onAuthenticationFailed() {
                         LoginActivity.this.runOnUiThread(new Runnable() {
                             public void run() {
-                                String welcome = getString(R.string.login_failed);
-                                Toast.makeText(LoginActivity.this, welcome, Toast.LENGTH_LONG).show();
+                                String fail = getString(R.string.login_failed);
+                                Toast.makeText(LoginActivity.this, fail, Toast.LENGTH_LONG).show();
                             }
                         });
                     }
@@ -120,8 +121,8 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
                     public void onAuthenticationCancelled() {
                         LoginActivity.this.runOnUiThread(new Runnable() {
                             public void run() {
-                                String welcome = getString(R.string.login_cancelled);
-                                Toast.makeText(LoginActivity.this, welcome, Toast.LENGTH_LONG).show();
+                                String cancel = getString(R.string.login_cancelled);
+                                Toast.makeText(LoginActivity.this, cancel, Toast.LENGTH_LONG).show();
                             }
                         });
                     }
@@ -132,5 +133,11 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
             //TODO support other local login methods? see second half of
             // https://proandroiddev.com/5-steps-to-implement-biometric-authentication-in-android-dbeb825aeee8
         }
+    }
+
+    @Override
+    public void onPause(){
+        super.onPause();
+        NotificationUtils.isAppOpen = false;
     }
 }

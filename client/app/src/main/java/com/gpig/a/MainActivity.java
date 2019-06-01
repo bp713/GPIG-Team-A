@@ -22,6 +22,7 @@ import com.gpig.a.settings.Settings;
 import com.gpig.a.settings.SettingsFragment;
 import com.gpig.a.tickets.Ticket;
 import com.gpig.a.utils.FIDO2Utils;
+import com.gpig.a.utils.NotificationUtils;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener, TicketFragment.OnListFragmentInteractionListener {
@@ -34,6 +35,7 @@ public class MainActivity extends AppCompatActivity
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         email = getIntent().getStringExtra("email");
+        NotificationUtils.isAppOpen = true;
 
         StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
         StrictMode.setThreadPolicy(policy);
@@ -171,6 +173,12 @@ public class MainActivity extends AppCompatActivity
         super.onRestart();
         startActivity(new Intent(this, LoginActivity.class));
         finish();
+    }
+
+    @Override
+    public void onPause(){
+        super.onPause();
+        NotificationUtils.isAppOpen = false;
     }
 
 
