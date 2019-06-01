@@ -7,6 +7,7 @@ from .forms import RouteForm
 import os
 from django.conf import settings
 import django
+from pywarp.util import b64_encode, b64url_decode
 import json
 import time
 import controller.Routetest as rt
@@ -56,12 +57,14 @@ def routeCalc(request):
 @csrf_exempt #TODO: This should be removed and proper CSRFs used in the android app
 def checkin(request, courier_id):
     courier = get_object_or_404(Courier, pk=courier_id)
-    # if 'one_time_key' in request.POST:
-    #     auth_courier = get_object_or_404(Auth_Courier,controller_model=courier)
-    #     assert time.time() < int(auth_courier.one_time_key.split(',')[1])
-    #     assert request.POST.get('one_time_key') == auth_courier.one_time_key
-    #     auth_courier.one_time_key = ''
-    #     auth_courier.save()
+    if 'one_time_key' not in request.POST:
+        return HttpResponse('authentication failed')
+    auth_courier = get_object_or_404(Auth_Courier,controller_model=courier)
+    assert time.time() < int(auth_courier.one_time_key.split(',')[1]) # make sure key is still valid
+    assert request.POST.get('one_time_key').split(',')[1] == auth_courier.one_time_key.split(',')[1] # assert same timestamp
+    assert b64url_decode(request.POST.get('one_time_key').split(',')[0]) == b64url_decode(auth_courier.one_time_key.split(',')[0]) #assert same key
+    auth_courier.one_time_key = ''
+    auth_courier.save()
     route = courier.route
     if route.length == route.current:
         route.delete()
@@ -81,7 +84,7 @@ def update(request, lattitude, longitude, courier_id):
     courier.save()
     if courier.route_ready:
         route = courier.route
-        if route.current >=0: # only respond true if the courier hasnt checked in yet
+        if route.current >0: # dont recalculate route after the courier has completed it
             return HttpResponse('False')
         old_comp = RouteComponent.objects.filter(route=route, position=0).delete()
         first_stage = RouteComponent.objects.filter(route=route, position=1)[0].json
@@ -92,6 +95,8 @@ def update(request, lattitude, longitude, courier_id):
         first_comp_json = rt.makeroute([point1, first_point_string], rt.key, rt.maxtraveltime)
         comp = RouteComponent(route=route, position = 0, json=json.dumps(first_comp_json))
         comp.save()
+        if route.current == 0: # only respond true if the courier hasnt checked in yet
+            return HttpResponse('False')
         return HttpResponse('True')
     else:
         return HttpResponse('False')

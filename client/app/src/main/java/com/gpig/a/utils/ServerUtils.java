@@ -1,8 +1,11 @@
 package com.gpig.a.utils;
 
+import android.location.Location;
 import android.os.AsyncTask;
 import android.util.Log;
+import android.widget.Toast;
 
+import com.gpig.a.MainActivity;
 import com.gpig.a.PollServer;
 import com.gpig.a.settings.Settings;
 
@@ -17,6 +20,7 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.concurrent.ExecutionException;
 
 public final class ServerUtils {
 
@@ -30,6 +34,38 @@ public final class ServerUtils {
     public static AsyncTask<String, String, String> getFromServer(String path) {
         String serverUrl = "https://" + Settings.ServerIP + ":" + Settings.ServerPort + "/" + path;
         return new GETAPI().execute(serverUrl);
+    }
+
+    public static boolean checkIn(String oneTimeKey, MainActivity activity) throws ExecutionException, InterruptedException {
+        if(StatusUtils.canCheckIn(activity) || StatusUtils.hasNewRoute(activity)) {
+            String data = "one_time_key=" + oneTimeKey;
+            Log.i(TAG, "sendVerifyCompleteToClient: " + data);
+            Location location = StatusUtils.getLastKnownLocation(activity, true);
+            assert location != null;
+            AsyncTask<String, String, String> updateTask = ServerUtils.getFromServer("controller/update/" + location.getLatitude() + "/" + location.getLongitude() + "/" + Settings.userID + "/");
+            updateTask.get();//make sure the server has current location
+            data += "&check_in=" + location.getLatitude() + "," + location.getLongitude();
+            AsyncTask<String, String, String> task = ServerUtils.postToServer("controller/checkin/" + Settings.userID + "/", data);
+            String json = task.get();
+            if(json.length() < 5){
+                return false;
+            }
+            else if(json.equals("no route")){
+                //TODO final destination screen
+                Toast.makeText(activity.getApplicationContext(), "Route Completed!", Toast.LENGTH_LONG).show();
+
+                return true;
+            }else if(json.equals("authentication failed")){
+                return false;
+            }
+            PollServer.areUpdatesAvailable = false;
+            if (RouteUtils.hasRouteChanged(activity, RouteUtils.routeFilename, json)) {
+                FileUtils.writeToInternalStorage(activity, RouteUtils.routeFilename, json);
+            }
+            activity.switchToMap();
+            return true;
+        }
+        return false;
     }
 
     static class POSTAPI extends AsyncTask<String, String, String> {

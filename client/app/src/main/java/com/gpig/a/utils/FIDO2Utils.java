@@ -156,27 +156,10 @@ public final class FIDO2Utils {
                 Settings.userID = options.getString("user_id");
                 Settings.writeToFile(activity);
                 ServerUtils.pollServer.setAlarm(activity.getApplicationContext());
-                if(StatusUtils.canCheckIn(activity) || StatusUtils.hasNewRoute(activity)) {
-                    data = "one_time_key=" + options.getString("one_time_key");
-                    Location location = StatusUtils.getLastKnownLocation(activity, true);
-                    assert location != null;
-                    AsyncTask<String, String, String> updateTask = ServerUtils.getFromServer("controller/update/" + location.getLatitude() + "/" + location.getLongitude() + "/" + Settings.userID + "/");
-                    updateTask.get();//make sure the server has current location
-                    data += "&check_in=" + location.getLatitude() + "," + location.getLongitude();
-                    task = ServerUtils.postToServer("controller/checkin/" + Settings.userID + "/", data);
-                    String json = task.get();
-                    if(json.equals("no route")){
-                        //TODO final destination screen
-                        Toast.makeText(activity.getApplicationContext(), "Route Completed!", Toast.LENGTH_LONG).show();
-
-                        return;
-                    }
-                    PollServer.areUpdatesAvailable = false;
-                    if (RouteUtils.hasRouteChanged(activity, RouteUtils.routeFilename, json)) {
-                        FileUtils.writeToInternalStorage(activity, RouteUtils.routeFilename, json);
-                    }
-                    activity.switchToMap();
-                }
+                String[] oneTimeKeyParts = options.getString("one_time_key").split(",");
+                String oneTimeKey = Base64.encodeToString(Base64.decode(oneTimeKeyParts[0], Base64.DEFAULT), Base64.URL_SAFE | Base64.NO_WRAP);//.replace("\n","").replace("\r","");
+                oneTimeKey += "," + oneTimeKeyParts[1];
+                ServerUtils.checkIn(oneTimeKey, activity);
             }else{
                 Toast.makeText(activity.getApplicationContext(), "Verification Failed! Is your email correct?", Toast.LENGTH_SHORT).show();
             }
