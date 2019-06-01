@@ -60,9 +60,12 @@ def checkin(request, courier_id):
     if 'one_time_key' not in request.POST:
         return HttpResponse('authentication failed')
     auth_courier = get_object_or_404(Auth_Courier,controller_model=courier)
-    assert time.time() < int(auth_courier.one_time_key.split(',')[1]) # make sure key is still valid
-    assert request.POST.get('one_time_key').split(',')[1] == auth_courier.one_time_key.split(',')[1] # assert same timestamp
-    assert b64url_decode(request.POST.get('one_time_key').split(',')[0]) == b64url_decode(auth_courier.one_time_key.split(',')[0]) #assert same key
+    if time.time() > int(auth_courier.one_time_key.split(',')[1]): # make sure key is still valid
+        return HttpResponse('key no longer valid')
+    if request.POST.get('one_time_key').split(',')[1] != auth_courier.one_time_key.split(',')[1]: # check same key timestamp
+        return HttpResponse('key doesnt match')
+    if b64url_decode(request.POST.get('one_time_key').split(',')[0]) != b64url_decode(auth_courier.one_time_key.split(',')[0]): # check same key
+        return HttpResponse('key doesnt match')
     auth_courier.one_time_key = ''
     auth_courier.save()
     route = courier.route

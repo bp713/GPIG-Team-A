@@ -53,9 +53,14 @@ public final class ServerUtils {
             else if(json.equals("no route")){
                 //TODO final destination screen
                 Toast.makeText(activity.getApplicationContext(), "Route Completed!", Toast.LENGTH_LONG).show();
-
+                FileUtils.removeInternalFile(activity, RouteUtils.routeFilename);
+                activity.switchToMap();
                 return true;
             }else if(json.equals("authentication failed")){
+                return false;
+            }else if(json.equals("key no longer valid")){
+                return false;
+            }else if(json.equals("key doesnt match")){
                 return false;
             }
             PollServer.areUpdatesAvailable = false;

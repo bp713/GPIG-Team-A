@@ -159,7 +159,9 @@ public final class FIDO2Utils {
                 String[] oneTimeKeyParts = options.getString("one_time_key").split(",");
                 String oneTimeKey = Base64.encodeToString(Base64.decode(oneTimeKeyParts[0], Base64.DEFAULT), Base64.URL_SAFE | Base64.NO_WRAP);//.replace("\n","").replace("\r","");
                 oneTimeKey += "," + oneTimeKeyParts[1];
-                ServerUtils.checkIn(oneTimeKey, activity);
+                if(!ServerUtils.checkIn(oneTimeKey, activity)){
+                    Toast.makeText(activity.getApplicationContext(), "Check in Failed!", Toast.LENGTH_LONG).show();
+                }
             }else{
                 Toast.makeText(activity.getApplicationContext(), "Verification Failed! Is your email correct?", Toast.LENGTH_SHORT).show();
             }
