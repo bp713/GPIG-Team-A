@@ -57,17 +57,22 @@ def routeCalc(request):
 @csrf_exempt #TODO: This should be removed and proper CSRFs used in the android app
 def checkin(request, courier_id):
     courier = get_object_or_404(Courier, pk=courier_id)
+
+    # check authentication
     if 'one_time_key' not in request.POST:
         return HttpResponse('authentication failed')
     auth_courier = get_object_or_404(Auth_Courier,controller_model=courier)
-    if time.time() > int(auth_courier.one_time_key.split(',')[1]): # make sure key is still valid
+    remote_one_time_key = request.POST.get('one_time_key').split(',')
+    valid_one_time_key = auth_courier.one_time_key.split(',')
+    if time.time() > int(remote_one_time_key[1]): # make sure key is still valid
         return HttpResponse('key no longer valid')
-    if request.POST.get('one_time_key').split(',')[1] != auth_courier.one_time_key.split(',')[1]: # check same key timestamp
+    if remote_one_time_key[1] != valid_one_time_key[1]: # check same key timestamp
         return HttpResponse('key doesnt match')
-    if b64url_decode(request.POST.get('one_time_key').split(',')[0]) != b64url_decode(auth_courier.one_time_key.split(',')[0]): # check same key
+    if b64url_decode(remote_one_time_key[0]) != b64url_decode(valid_one_time_key[0]): # check same key
         return HttpResponse('key doesnt match')
-    auth_courier.one_time_key = ''
+    auth_courier.one_time_key = '' #key used so remove it
     auth_courier.save()
+
     route = courier.route
     if route.length == route.current:
         route.delete()
@@ -80,8 +85,23 @@ def checkin(request, courier_id):
         comp = RouteComponent.objects.filter(route=route, position=route.current)[0]
         return HttpResponse(comp.json, content_type="application/json")
 
+@csrf_exempt #TODO: This should be removed and proper CSRFs used in the android app
 def update(request, lattitude, longitude, courier_id):
     courier = get_object_or_404(Courier, pk=courier_id)
+
+    # check authentication
+    if 'session_key' not in request.POST:
+        return HttpResponse('authentication failed')
+    auth_courier = get_object_or_404(Auth_Courier,controller_model=courier)
+    remote_session_key = request.POST.get('session_key').split(',')
+    valid_session_key = auth_courier.session_key.split(',')
+    if time.time() > int(remote_session_key[1]): # make sure key is still valid
+        return HttpResponse('key no longer valid')
+    if remote_session_key[1] != valid_session_key[1]: # check same key timestamp
+        return HttpResponse('key doesnt match')
+    if b64url_decode(remote_session_key[0]) != b64url_decode(valid_session_key[0]): # check same key
+        return HttpResponse('key doesnt match')
+
     courier.lattitude = lattitude
     courier.longitude = longitude
     courier.save()
