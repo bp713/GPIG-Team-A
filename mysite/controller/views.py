@@ -22,10 +22,10 @@ def controller(request, controller_id):
             start_lat = form.cleaned_data['start_lat']
             end_long = form.cleaned_data['end_long']
             end_lat = form.cleaned_data['end_lat']
-            courier_id = form.cleaned_data['courier_id']
+            courier = form.cleaned_data['courier_id'].controller_model
             point1 = '%s,%s' %(start_lat,start_long)
             point2 = '%s,%s' %(end_lat,end_long)
-            assign_route(courier_id, point1, point2)
+            assign_route(courier, point1, point2)
             return HttpResponseRedirect('couriers/')
     else:
         form = RouteForm()
@@ -64,6 +64,8 @@ def checkin(request, courier_id):
     auth_courier = get_object_or_404(Auth_Courier,controller_model=courier)
     remote_one_time_key = request.POST.get('one_time_key').split(',')
     valid_one_time_key = auth_courier.one_time_key.split(',')
+    if len(valid_one_time_key) == 0 or len(valid_one_time_key) != len(remote_one_time_key):
+        return HttpResponse('authentication failed')
     if time.time() > int(remote_one_time_key[1]): # make sure key is still valid
         return HttpResponse('key no longer valid')
     if remote_one_time_key[1] != valid_one_time_key[1]: # check same key timestamp
@@ -95,6 +97,8 @@ def update(request, lattitude, longitude, courier_id):
     auth_courier = get_object_or_404(Auth_Courier,controller_model=courier)
     remote_session_key = request.POST.get('session_key').split(',')
     valid_session_key = auth_courier.session_key.split(',')
+    if len(valid_session_key) == 0 or len(valid_session_key) != len(remote_session_key):
+        return HttpResponse('authentication failed')
     if time.time() > int(remote_session_key[1]): # make sure key is still valid
         return HttpResponse('key no longer valid')
     if remote_session_key[1] != valid_session_key[1]: # check same key timestamp
