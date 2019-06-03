@@ -8,5 +8,6 @@ urlpatterns = [
     path('route/', views.route, name='route'),
     path('routecalc/', views.routeCalc, name='routeCalc'),
     path('checkin/<int:courier_id>/', views.checkin, name='checkin'),
+    path('viewroute/<int:courier_id>/', views.view_route, name = 'view_route'),
     path('update/<str:lattitude>/<str:longitude>/<int:courier_id>/', views.update, name= 'update')
 ]

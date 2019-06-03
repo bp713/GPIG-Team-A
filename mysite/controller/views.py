@@ -123,3 +123,10 @@ def update(request, lattitude, longitude, courier_id):
         return HttpResponse('True')
     else:
         return HttpResponse('False')
+
+def view_route(request, courier_id):
+    courier = get_object_or_404(Courier, pk=courier_id)
+    route = courier.route
+    jsonroute = json.loads(RouteComponent.objects.filter(route=route, position=-1)[0].json)
+    context = { 'route' :  json.dumps(jsonroute)}
+    return render(request, 'controller/route.html', context)
