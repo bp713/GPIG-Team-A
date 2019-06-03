@@ -1,5 +1,6 @@
 package com.gpig.a.utils;
 
+import android.content.Context;
 import android.location.Location;
 import android.os.AsyncTask;
 import android.util.Log;
@@ -69,6 +70,47 @@ public final class ServerUtils {
             }
             activity.switchToMap();
             return true;
+        }
+        return false;
+    }
+
+    public static boolean hasUpdate(Context context){
+        if(Settings.SessionKey.equals("") || Integer.parseInt(Settings.SessionKey.split(",")[1]) < System.currentTimeMillis()/1000){
+            // if there is no session key or it has expired then cancel the alarm
+            NotificationUtils.notify(context, "Not Receiving Updates", "Please verify your credentials with the server to check for new updates");
+            if(pollServer != null) {
+                pollServer.cancelAlarm(context);
+            }
+            Log.d(TAG, "onReceive: no session key or it has expired: " + Settings.SessionKey);
+            Log.d(TAG, "onReceive: Current time: " + System.currentTimeMillis()/1000);
+            return false;
+        }
+        //TODO check for network
+//        if(!StatusUtils.isNetworkAvailable()){
+//            // no network so cant poll
+//            return;
+//        }
+        Location location = StatusUtils.getLastKnownLocation(context, false);
+        String data = "session_key="+Settings.SessionKey;
+        if (location != null) {
+            AsyncTask<String, String, String> updateTask = ServerUtils.postToServer("controller/update/" + location.getLatitude() + "/" + location.getLongitude() + "/" + Settings.userID + "/", data);
+            try {
+                String updates = updateTask.get();
+                Log.d(TAG, "onReceive: " + updates);
+                if (updates.contains("True")) {
+                    return true;
+                }else if(updates.equals("key doesnt match")){
+                    NotificationUtils.notify(context, "Not Receiving Updates", "Please verify your credentials with the server to check for new updates");
+                    if(pollServer != null) {
+                        pollServer.cancelAlarm(context);
+                    }
+                    return false;
+                }
+            } catch (ExecutionException e) {
+                e.printStackTrace();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
         }
         return false;
     }

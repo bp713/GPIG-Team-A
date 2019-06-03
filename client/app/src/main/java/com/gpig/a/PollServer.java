@@ -29,33 +29,9 @@ public class PollServer extends BroadcastReceiver {
     public void onReceive(Context context, Intent intent)
     {//TODO notifications fail to show
         Log.d(TAG, "onReceive: ");
-        if(Settings.SessionKey.equals("") || Integer.parseInt(Settings.SessionKey.split(",")[1]) < System.currentTimeMillis()/1000){
-            // if there is no session key or it has expired then cancel the alarm
-            NotificationUtils.notify(context, "Not Receiving Updates", "Please verify your credentials with the server to check for new updates");
-            this.cancelAlarm(context);
-            Log.d(TAG, "onReceive: no session key or it has expired: " + Settings.SessionKey);
-            Log.d(TAG, "onReceive: Current time: " + System.currentTimeMillis()/1000);
-            return;
-        }
-        //TODO check for network
-//        if(!StatusUtils.isNetworkAvailable()){
-//            // no network so cant poll
-//            return;
-//        }
-        Location location = StatusUtils.getLastKnownLocation(context, false);
-        AsyncTask<String, String, String> updateTask = ServerUtils.getFromServer("controller/update/" + location.getLatitude() + "/" + location.getLongitude() + "/" + Settings.userID + "/");
-        try {
-            String updates = updateTask.get();
-            Log.d(TAG, "onReceive: " + updates);
-            if (updates.contains("True")) {
-                areUpdatesAvailable = true;
-                NotificationUtils.notify(context, "Updates Available", "New updates are available, sign into the app for more details");
-                Log.d(TAG, "onReceive: " + updates);
-            }
-        } catch (ExecutionException e) {
-            e.printStackTrace();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
+        if(ServerUtils.hasUpdate(context)){
+            areUpdatesAvailable = true;
+            NotificationUtils.notify(context, "Updates Available", "New updates are available, sign into the app for more details");
         }
     }
 
