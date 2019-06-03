@@ -19,7 +19,7 @@ def customVerify(rp, authenticator_data, client_data_json, signature, email, use
     assert client_data["type"] == "webauthn.get"
     expect_challenge = rp.storage_backend.get_challenge_for_user(email=email, type="authentication")
     assert str(b64url_decode(client_data["challenge"])) == str(expect_challenge)
-    print("expect RP ID:", rp.rp_id)
+    # print("expect RP ID:", rp.rp_id)
     if rp.rp_id:
         assert "https://" + rp.rp_id == client_data["origin"] or 'android:apk-key-hash:' in client_data["origin"] # TODO: use full apk hash
     # Verify that the value of C.origin matches the Relying Party's origin.
@@ -40,10 +40,10 @@ def customRegister(rp, client_data_json, attestation_object, email):
     client_data_hash = hashlib.sha256(client_data_json.encode('utf-8')).digest()
     client_data = json.loads(client_data_json)
     assert client_data["type"] == "webauthn.create"
-    print("client data", client_data)
+    # print("client data", client_data)
     expect_challenge = rp.storage_backend.get_challenge_for_user(email=email, type="registration")
     assert str(b64url_decode(client_data["challenge"])) == str(expect_challenge)
-    print("expect RP ID:", rp.rp_id)
+    # print("expect RP ID:", rp.rp_id)
     if rp.rp_id:
         assert "https://" + rp.rp_id == client_data["origin"] or 'android:apk-key-hash:' in client_data["origin"] # TODO: use full apk hash
     # Verify that the value of C.origin matches the Relying Party's origin.
