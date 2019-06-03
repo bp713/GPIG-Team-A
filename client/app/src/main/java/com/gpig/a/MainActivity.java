@@ -11,6 +11,7 @@ import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -178,7 +179,15 @@ public class MainActivity extends AppCompatActivity
     @Override
     public void onPause(){
         super.onPause();
+        Log.i(TAG, "onPause: Main");
         NotificationUtils.isAppOpen = false;
+    }
+
+    @Override
+    public void onStart(){
+        super.onStart();
+        Log.i(TAG, "onStart: Main");
+        NotificationUtils.isAppOpen = true;
     }
 
 

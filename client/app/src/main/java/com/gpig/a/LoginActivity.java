@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.hardware.biometrics.BiometricPrompt;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -22,6 +23,7 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        NotificationUtils.isAppOpen = true;
         NotificationUtils.createNotificationChannel(this);
         setContentView(R.layout.activity_login);
         Button b = findViewById(R.id.login_button);
@@ -138,6 +140,14 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
     @Override
     public void onPause(){
         super.onPause();
+        Log.i(TAG, "onPause: Login");
         NotificationUtils.isAppOpen = false;
+    }
+
+    @Override
+    public void onStart(){
+        Log.i(TAG, "onStart: Login");
+        super.onStart();
+        NotificationUtils.isAppOpen = true;
     }
 }
