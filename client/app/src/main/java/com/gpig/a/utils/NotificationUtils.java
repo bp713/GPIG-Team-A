@@ -50,7 +50,7 @@ public final class NotificationUtils {
 
     public static void notify(Context context, String title, String text) {
         if(isAppOpen){
-            Toast.makeText(context, "Updates Available", Toast.LENGTH_LONG).show(); //TODO use snackbar
+            Toast.makeText(context, title, Toast.LENGTH_LONG).show(); //TODO use snackbar
             return;
         }
         Intent intent = new Intent(context, LoginActivity.class);
