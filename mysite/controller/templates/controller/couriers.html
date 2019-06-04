@@ -1,5 +1,5 @@
 <ul>
 {% for courier in controller.courier_set.all %}
-    <li>courier {{courier.id}} is on leg {{courier.route.current}} of {{courier.route.length}} </li>
+    <li>courier {{courier.courier.email}} is on leg {{courier.route.current}} of {{courier.route.length}} </li>
 {% endfor %}
 </ul>
