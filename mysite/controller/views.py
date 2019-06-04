@@ -110,7 +110,10 @@ def update(request, lattitude, longitude, courier_id):
     courier.longitude = longitude
     courier.save()
     if courier.route_ready:
-        route = courier.route
+        try:
+            route = courier.route
+        except Courier.route.RelatedObjectDoesNotExist as e:
+            return HttpResponse('False')
         if route.current >0: # dont recalculate route after the courier has completed it
             return HttpResponse('False')
         old_comp = RouteComponent.objects.filter(route=route, position=0).delete()
