@@ -5,6 +5,7 @@
     <!-- Required meta tags -->
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
 
     <!-- Material Design for Bootstrap fonts and icons -->
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700|Material+Icons">
@@ -14,6 +15,14 @@
 
     <script src="https://cdn.jsdelivr.net/npm/graphhopper-js-api-client/dist/graphhopper-client.js"></script>
     <script type="text/javascript">
+      $(document).ready(function() {
+        let newClass = "form-control";
+        $('#id_start_lat').addClass(newClass);
+        $('#id_start_long').addClass(newClass);
+        $('#id_end_lat').addClass(newClass);
+        $('#id_end_long').addClass(newClass);
+        $('#id_courier_id').addClass(newClass);
+      });
       var ghGeocoding = new GraphHopper.Geocoding({
           key: '0435eec9-ae8e-431c-b207-f748944e0a19',
           // host: "https://graphhopper.com/api/1",
@@ -59,11 +68,11 @@
                   html += '<th>';
 
                   html += '<th>';
-                  html += '<button type="button" name="button" onclick="setStart(\''+hit.point.lng+'\',\''+hit.point.lat+'\')">Use As Start</button>';
+                  html += '<button type="button" name="button" class="btn btn-primary" onclick="setStart(\''+hit.point.lng+'\',\''+hit.point.lat+'\')">Use As Start</button>';
                   html += '<th>';
 
                   html += '<th>';
-                  html += '<button type="button" name="button" onclick="setEnd(\''+hit.point.lng+'\',\''+hit.point.lat+'\')">Use As End</button>';
+                  html += '<button type="button" name="button" class="btn btn-primary" onclick="setEnd(\''+hit.point.lng+'\',\''+hit.point.lat+'\')">Use As End</button>';
                   html += '<th>';
 
                   html += '</tr>';
@@ -116,9 +125,10 @@
       <div class="starter-template">
         <!-- <h1>Welcome {{ controller.name }}</h1> -->
         Location Search:
-        <input type="text" id="locationName" name="locationName" value="">
-        <button type="button" name="button" onclick="findLongLat($('#locationName').val())">Search</button>
-        <br>
+        <div class="form-group form-inline" style="justify-content: center;">
+          <input type="text" id="locationName" name="locationName" class="form-control" value="">
+          <button type="button" name="button" onclick="findLongLat($('#locationName').val())" class="btn btn-primary">Search</button>
+        </div>
         <div class="" id="results">
         </div>
         <br>
@@ -130,14 +140,13 @@
             <table class="table">
               {{ form }}
             </table>
-            <input type="submit" value="Submit">
+            <input type="submit" value="Submit" class="btn btn-primary">
         </form>
       </div>
     </main>
 
     <!-- Optional JavaScript -->
     <!-- jQuery first, then Popper.js, then Bootstrap JS -->
-    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
     <script src="https://unpkg.com/popper.js@1.12.6/dist/umd/popper.js" integrity="sha384-fA23ZRQ3G/J53mElWqVJEGJzU0sTs+SvzG8fXVWP+kJQ1lwFAOkcUOysnlKJC33U" crossorigin="anonymous"></script>
     <script src="https://unpkg.com/bootstrap-material-design@4.1.1/dist/js/bootstrap-material-design.js" integrity="sha384-CauSuKpEqAFajSpkdjv3z9t8E7RlpJ1UP0lKM/+NdtSarroVKu069AlsRPKkFBz9" crossorigin="anonymous"></script>
     <script>$(document).ready(function() { $('body').bootstrapMaterialDesign(); });</script>
