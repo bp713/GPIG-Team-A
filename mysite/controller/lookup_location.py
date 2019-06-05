@@ -18,7 +18,7 @@ def lookup_location(key,q,limit,locale='en'):
 	    api_response = api_instance.geocode_get(key, q=q, locale=locale, limit=limit)
 	    response = api_response.to_dict()
 	    #pprint(api_response)
-	    print(response['hits'][1])
+	    return response['hits']
 	except ApiException as e:
 	    print("Exception when calling GeocodingApi->geocode_get: %s\n" % e)
 lookup_location(key,q,limit)
