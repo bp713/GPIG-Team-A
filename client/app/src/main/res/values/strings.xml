@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Silver Greyhound</string>
+    <string name="app_name">Phound</string>
 
     <!-- Navigation drawer strings -->
     <string name="navigation_drawer_open">Open navigation drawer</string>
