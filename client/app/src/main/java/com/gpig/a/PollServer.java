@@ -29,10 +29,7 @@ public class PollServer extends BroadcastReceiver {
     public void onReceive(Context context, Intent intent)
     {//TODO notifications fail to show
         Log.d(TAG, "onReceive: ");
-        if(ServerUtils.hasUpdate(context)){
-            areUpdatesAvailable = true;
-            NotificationUtils.notify(context, "Updates Available", "New updates are available, sign into the app for more details");
-        }
+        ServerUtils.checkUpdate(context);
     }
 
     public void setAlarm(Context context)

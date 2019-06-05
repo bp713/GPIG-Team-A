@@ -21,6 +21,7 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.concurrent.ExecutionException;
 
 public final class ServerUtils {
@@ -29,7 +30,7 @@ public final class ServerUtils {
     public static PollServer pollServer;
 
     public static AsyncTask<String, String, String> postToServer(String path, String data){
-        return new POSTAPI().execute("https://" + Settings.ServerIP + ":" + Settings.ServerPort + "/" + path, data);
+        return new POSTAPI((result)->{}).execute("https://" + Settings.ServerIP + ":" + Settings.ServerPort + "/" + path, data);
     }
 
     public static AsyncTask<String, String, String> getFromServer(String path) {
@@ -74,7 +75,7 @@ public final class ServerUtils {
         return false;
     }
 
-    public static boolean hasUpdate(Context context){
+    public static void checkUpdate(Context context){
         if(Settings.SessionKey.equals("") || Integer.parseInt(Settings.SessionKey.split(",")[1]) < System.currentTimeMillis()/1000){
             // if there is no session key or it has expired then cancel the alarm
             NotificationUtils.notify(context, "Not Receiving Updates", "Please verify your credentials with the server to check for new updates");
@@ -83,7 +84,7 @@ public final class ServerUtils {
             }
             Log.d(TAG, "onReceive: no session key or it has expired: " + Settings.SessionKey);
             Log.d(TAG, "onReceive: Current time: " + System.currentTimeMillis()/1000);
-            return false;
+            return;
         }
         //TODO check for network
 //        if(!StatusUtils.isNetworkAvailable()){
@@ -93,37 +94,41 @@ public final class ServerUtils {
         Location location = StatusUtils.getLastKnownLocation(context, false);
         String data = "session_key="+Settings.SessionKey;
         if (location != null) {
-            AsyncTask<String, String, String> updateTask = ServerUtils.postToServer("controller/update/" + location.getLatitude() + "/" + location.getLongitude() + "/" + Settings.userID + "/", data);
-            try {
-                String updates = updateTask.get();
+            String path = "controller/update/" + location.getLatitude() + "/" + location.getLongitude() + "/" + Settings.userID + "/";
+            new POSTAPI((updates)->{
                 Log.d(TAG, "onReceive: " + updates);
                 if (updates.contains("True")) {
-                    return true;
+                    PollServer.areUpdatesAvailable = true;
+                    NotificationUtils.notify(context, "Updates Available", "New updates are available, sign into the app for more details");
                 }else if(updates.equals("key doesnt match")){
                     NotificationUtils.notify(context, "Not Receiving Updates", "Please verify your credentials with the server to check for new updates");
                     if(pollServer != null) {
                         pollServer.cancelAlarm(context);
                     }
-                    return false;
                 }
-            } catch (ExecutionException e) {
-                e.printStackTrace();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
+            }).execute("https://" + Settings.ServerIP + ":" + Settings.ServerPort + "/" + path, data);
         }
-        return false;
     }
 
     static class POSTAPI extends AsyncTask<String, String, String> {
+        public interface AsyncResponse {
+            void processFinish(String output);
+        }
 
-        POSTAPI() {
-            //set context variables if required
+        private AsyncResponse delegate = null;
+
+        private POSTAPI(AsyncResponse delegate){
+            this.delegate = delegate;
         }
 
         @Override
         protected void onPreExecute() {
             super.onPreExecute();
+        }
+
+        @Override
+        protected void onPostExecute(String result) {
+            delegate.processFinish(result);
         }
 
         @Override
@@ -142,7 +147,7 @@ public final class ServerUtils {
                 urlConnection.setDoOutput(true);
                 out = new BufferedOutputStream(urlConnection.getOutputStream());
 
-                BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(out, "UTF-8"));
+                BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(out, StandardCharsets.UTF_8));
                 writer.write(data);
                 writer.flush();
                 try {
@@ -200,7 +205,6 @@ public final class ServerUtils {
             } catch (FileNotFoundException ex) {
                 ex.printStackTrace();
                 Log.e(TAG, ex.toString());
-                return "True";
             } catch (IOException ex) {
                 ex.printStackTrace();
                 Log.e(TAG, ex.toString());
@@ -209,4 +213,5 @@ public final class ServerUtils {
             return result.toString();
         }
     }
+
 }
