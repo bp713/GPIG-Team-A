@@ -53,7 +53,9 @@ public final class NotificationUtils {
             Toast.makeText(context, title, Toast.LENGTH_LONG).show(); //TODO use snackbar
             return;
         }
+        int notificationID = 5;
         Intent intent = new Intent(context, LoginActivity.class);
+        intent.putExtra("NotificationID", notificationID);
 // use System.currentTimeMillis() to have a unique ID for the pending intent
         PendingIntent pIntent = PendingIntent.getActivity(context, (int) System.currentTimeMillis(), intent, 0);
 
@@ -64,11 +66,16 @@ public final class NotificationUtils {
         nBuilder.setContentIntent(pIntent);
         nBuilder.setSmallIcon(R.mipmap.ic_launcher);
         NotificationManager mNotificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
-        mNotificationManager.notify(0, nBuilder.build());
+        mNotificationManager.notify(notificationID, nBuilder.build());
     }
 
     public static void clearNotifications(Context context) {
         NotificationManager mNotificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
         mNotificationManager.cancelAll();
+    }
+
+    public static void clearNotification(Context context, int id) {
+        NotificationManager mNotificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+        mNotificationManager.cancel(id);
     }
 }

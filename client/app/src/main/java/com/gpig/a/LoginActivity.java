@@ -25,7 +25,10 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
         super.onCreate(savedInstanceState);
         NotificationUtils.isAppOpen = true;
         NotificationUtils.createNotificationChannel(this);
-        NotificationUtils.clearNotifications(this);
+//        NotificationUtils.clearNotifications(this);
+        if(getIntent().hasExtra("NotificationID")){
+            NotificationUtils.clearNotification(this, getIntent().getIntExtra("NotificationID", 0));
+        }
         setContentView(R.layout.activity_login);
         Button b = findViewById(R.id.login_button);
         b.setOnClickListener(this);
