@@ -31,11 +31,21 @@
   <style media="screen">
     body {
       height: 100vh;
-      padding-top: 3rem;
+      padding-top: 3.5rem;
     }
     .starter-template {
       padding: 3rem 1.5rem;
       text-align: center;
+    }
+
+    .bg-dark {
+     background-color:#1565C0!important
+    }
+    a.bg-dark:focus,
+    a.bg-dark:hover,
+    button.bg-dark:focus,
+    button.bg-dark:hover {
+     background-color:#0D47A1!important
     }
   </style>
 
@@ -110,7 +120,7 @@
 
 </head>
 <body>
-  <nav class="navbar navbar-expand-md navbar-dark bg-dark fixed-top">
+  <nav class="navbar navbar-expand-md navbar-dark bg-dark fixed-top" style="z-index: 500;">
     <a class="navbar-brand" href="#">Phound</a>
     <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarsExampleDefault" aria-controls="navbarsExampleDefault" aria-expanded="false" aria-label="Toggle navigation">
       <span class="navbar-toggler-icon"></span>
