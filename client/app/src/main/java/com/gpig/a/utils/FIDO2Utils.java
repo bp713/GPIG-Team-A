@@ -143,28 +143,29 @@ public final class FIDO2Utils {
             data += "&client_data_json=" + new String(response.getClientDataJSON(), StandardCharsets.UTF_8);
             data += "&signature=" + Base64.encodeToString(response.getSignature(), Base64.URL_SAFE);
             data += "&courier_email=" + URLEncoder.encode(email, "UTF-8");
-            AsyncTask<String, String, String> task = ServerUtils.postToServer("authentication/authenticate/", data);
-            String result = task.get();
-            JSONObject options = new JSONObject(result);
-            if(options.getBoolean("verified")) {
-                String[] sessionKeyParts = options.getString("session_key").split(",");
-                String sessionKey = Base64.encodeToString(Base64.decode(sessionKeyParts[0], Base64.DEFAULT), Base64.URL_SAFE | Base64.NO_WRAP);// re-encode as urlsafe
-                sessionKey += "," + sessionKeyParts[1];
-                Settings.SessionKey = sessionKey;
-                Settings.userID = options.getString("user_id");
-                Settings.writeToFile(activity);
-                ServerUtils.pollServer.setAlarm(activity.getApplicationContext());
-                String[] oneTimeKeyParts = options.getString("one_time_key").split(",");
-                String oneTimeKey = Base64.encodeToString(Base64.decode(oneTimeKeyParts[0], Base64.DEFAULT), Base64.URL_SAFE | Base64.NO_WRAP);// re-encode as urlsafe
-                oneTimeKey += "," + oneTimeKeyParts[1];
-                if(StatusUtils.canCheckIn(activity) || StatusUtils.hasNewRoute(activity)) {
-                    if (!ServerUtils.checkIn(oneTimeKey, activity)) {
-                        Toast.makeText(activity.getApplicationContext(), "Check in Failed!", Toast.LENGTH_LONG).show();
+            ServerUtils.postToServer("authentication/authenticate/", data, (result) -> {
+                try{
+                JSONObject options = new JSONObject(result);
+                if(options.getBoolean("verified")) {
+                    String[] sessionKeyParts = options.getString("session_key").split(",");
+                    String sessionKey = Base64.encodeToString(Base64.decode(sessionKeyParts[0], Base64.DEFAULT), Base64.URL_SAFE | Base64.NO_WRAP);// re-encode as urlsafe
+                    sessionKey += "," + sessionKeyParts[1];
+                    Settings.SessionKey = sessionKey;
+                    Settings.userID = options.getString("user_id");
+                    Settings.writeToFile(activity);
+                    ServerUtils.pollServer.setAlarm(activity.getApplicationContext());
+                    String[] oneTimeKeyParts = options.getString("one_time_key").split(",");
+                    String oneTimeKey = Base64.encodeToString(Base64.decode(oneTimeKeyParts[0], Base64.DEFAULT), Base64.URL_SAFE | Base64.NO_WRAP);// re-encode as urlsafe
+                    oneTimeKey += "," + oneTimeKeyParts[1];
+                    if(StatusUtils.canCheckIn(activity) || StatusUtils.hasNewRoute(activity)) {
+                        ServerUtils.checkIn(oneTimeKey, activity);
                     }
+                }else{
+                    Toast.makeText(activity.getApplicationContext(), "Verification Failed! Is your email correct?", Toast.LENGTH_SHORT).show();
+                }}catch (Exception e){
+                    e.printStackTrace();
                 }
-            }else{
-                Toast.makeText(activity.getApplicationContext(), "Verification Failed! Is your email correct?", Toast.LENGTH_SHORT).show();
-            }
+            });
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -280,7 +281,7 @@ public final class FIDO2Utils {
             String data = "attestation_object=" + Base64.encodeToString(response.getAttestationObject(), Base64.URL_SAFE);
             data += "&client_data_json=" + new String(response.getClientDataJSON(), StandardCharsets.UTF_8);//Base64.encodeToString(response.getClientDataJSON(), Base64.URL_SAFE);
             data += "&courier_email=" + URLEncoder.encode(email, "UTF-8");
-            ServerUtils.postToServer("authentication/register/", data);
+            ServerUtils.postToServer("authentication/register/", data, (result)->{});
         } catch (Exception e) {
             e.printStackTrace();
         }

@@ -29,8 +29,8 @@ public final class ServerUtils {
     private static final String TAG = "ServerUtils";
     public static PollServer pollServer;
 
-    public static AsyncTask<String, String, String> postToServer(String path, String data){
-        return new POSTAPI((result)->{}).execute("https://" + Settings.ServerIP + ":" + Settings.ServerPort + "/" + path, data);
+    public static void postToServer(String path, String data, POSTAPI.AsyncResponse response){
+        new POSTAPI(response).execute("https://" + Settings.ServerIP + ":" + Settings.ServerPort + "/" + path, data);
     }
 
     public static AsyncTask<String, String, String> getFromServer(String path) {
@@ -38,7 +38,7 @@ public final class ServerUtils {
         return new GETAPI().execute(serverUrl);
     }
 
-    public static boolean checkIn(String oneTimeKey, MainActivity activity) throws ExecutionException, InterruptedException {
+    public static void checkIn(String oneTimeKey, MainActivity activity) throws ExecutionException, InterruptedException {
         if(StatusUtils.canCheckIn(activity) || StatusUtils.hasNewRoute(activity)) {
             String data = "one_time_key=" + oneTimeKey;
             Log.i(TAG, "sendVerifyCompleteToClient: " + data);
@@ -47,32 +47,36 @@ public final class ServerUtils {
             AsyncTask<String, String, String> updateTask = ServerUtils.getFromServer("controller/update/" + location.getLatitude() + "/" + location.getLongitude() + "/" + Settings.userID + "/");
             updateTask.get();//make sure the server has current location
             data += "&check_in=" + location.getLatitude() + "," + location.getLongitude();
-            AsyncTask<String, String, String> task = ServerUtils.postToServer("controller/checkin/" + Settings.userID + "/", data);
-            String json = task.get();
-            if(json.length() < 5){
-                return false;
-            }
-            else if(json.equals("no route")){
-                //TODO final destination screen
-                Toast.makeText(activity.getApplicationContext(), "Route Completed!", Toast.LENGTH_LONG).show();
-                FileUtils.removeInternalFile(activity, RouteUtils.routeFilename);
-                activity.switchToMap();
-                return true;
-            }else if(json.equals("authentication failed")){
-                return false;
-            }else if(json.equals("key no longer valid")){
-                return false;
-            }else if(json.equals("key doesnt match")){
-                return false;
-            }
-            PollServer.areUpdatesAvailable = false;
-            if (RouteUtils.hasRouteChanged(activity, RouteUtils.routeFilename, json)) {
-                FileUtils.writeToInternalStorage(activity, RouteUtils.routeFilename, json);
-            }
-            activity.switchToMap();
-            return true;
+            ServerUtils.postToServer("controller/checkin/" + Settings.userID + "/", data, (json)->{
+                boolean result;
+                if(json.length() < 5){
+                    result = false;
+                }
+                else if(json.equals("no route")){
+                    //TODO final destination screen
+                    Toast.makeText(activity.getApplicationContext(), "Route Completed!", Toast.LENGTH_LONG).show();
+                    FileUtils.removeInternalFile(activity, RouteUtils.routeFilename);
+                    activity.switchToMap();
+                    result = true;
+                }else if(json.equals("authentication failed")){
+                    result = false;
+                }else if(json.equals("key no longer valid")){
+                    result = false;
+                }else if(json.equals("key doesnt match")){
+                    result = false;
+                }else {
+                    PollServer.areUpdatesAvailable = false;
+                    if (RouteUtils.hasRouteChanged(activity, RouteUtils.routeFilename, json)) {
+                        FileUtils.writeToInternalStorage(activity, RouteUtils.routeFilename, json);
+                    }
+                    activity.switchToMap();
+                    result = true;
+                }
+                if(!result) {
+                    Toast.makeText(activity.getApplicationContext(), "Check in Failed!", Toast.LENGTH_LONG).show();
+                }
+            });
         }
-        return false;
     }
 
     public static void checkUpdate(Context context){
@@ -92,10 +96,10 @@ public final class ServerUtils {
 //            return;
 //        }
         Location location = StatusUtils.getLastKnownLocation(context, false);
-        String data = "session_key="+Settings.SessionKey;
+        String data = "session_key=" + Settings.SessionKey;
         if (location != null) {
             String path = "controller/update/" + location.getLatitude() + "/" + location.getLongitude() + "/" + Settings.userID + "/";
-            new POSTAPI((updates)->{
+            postToServer(path, data, (updates)->{
                 Log.d(TAG, "onReceive: " + updates);
                 if (updates.contains("True")) {
                     PollServer.areUpdatesAvailable = true;
@@ -106,7 +110,7 @@ public final class ServerUtils {
                         pollServer.cancelAlarm(context);
                     }
                 }
-            }).execute("https://" + Settings.ServerIP + ":" + Settings.ServerPort + "/" + path, data);
+            });
         }
     }
 
