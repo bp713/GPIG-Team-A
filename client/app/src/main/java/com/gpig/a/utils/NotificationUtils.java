@@ -66,4 +66,9 @@ public final class NotificationUtils {
         NotificationManager mNotificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
         mNotificationManager.notify(0, nBuilder.build());
     }
+
+    public static void clearNotifications(Context context) {
+        NotificationManager mNotificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+        mNotificationManager.cancelAll();
+    }
 }

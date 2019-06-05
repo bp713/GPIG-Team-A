@@ -1,25 +1,13 @@
 package com.gpig.a;
 
 import android.app.AlarmManager;
-import android.app.Notification;
-import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.location.Location;
-import android.net.ConnectivityManager;
-import android.os.AsyncTask;
 import android.util.Log;
-import android.widget.Toast;
 
-import com.gpig.a.settings.Settings;
-import com.gpig.a.utils.NotificationUtils;
 import com.gpig.a.utils.ServerUtils;
-import com.gpig.a.utils.StatusUtils;
-
-import java.io.FileNotFoundException;
-import java.util.concurrent.ExecutionException;
 
 public class PollServer extends BroadcastReceiver {
     public static final String TAG = "PollServer";
