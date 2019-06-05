@@ -1,5 +1,12 @@
 <ul>
 {% for courier in controller.courier_set.all %}
-    <li>courier {{courier.courier.email}} is on leg {{courier.route.current}} of {{courier.route.length}} </li>
+    <li>
+    {% if courier.route.current < 0 %}
+    Courier {{courier.courier.email}} has not started the route
+    {% else %}
+    Courier {{courier.courier.email}} is on leg {{courier.route.current}} of {{courier.route.length}}
+    {% endif %}
+    <a href="/controller/viewroute/{{courier.id}}/"> View on Map </a>
+    </li>
 {% endfor %}
 </ul>
