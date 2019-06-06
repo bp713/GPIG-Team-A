@@ -5,16 +5,20 @@ import os
 
 # Create your views here.
 def safety(request, locations):
-    locations = locations.replace('England','United Kingdom (England and Wales)')
-    locations = locations.replace('Wales','United Kingdom (England and Wales)')
-    locations = locations.replace('Scotland','United Kingdom (Scotland)')
-    locations = locations.replace('Northern Ireland','United Kingdom (Northern Ireland)')
     locations = locations.split(',')
     jsonfile = open(os.path.join(settings.BASE_DIR, 'safety/data/scores.json'), 'r')
     data = json.load(jsonfile)
     out = {}
     total = 0 
     for location in locations:
+        if 'England' in location:
+            location = 'United Kingdom (England and Wales)'
+        elif 'Wales' in location:
+            location = 'United Kingdom (England and Wales)'
+        elif 'Scotland' in location:
+            location = 'United Kingdom (Scotland)'
+        elif 'Northern Ireland' in location:
+            location = 'United Kingdom (Northern Ireland)'
         out[location] = data.get(location)
         total += data.get(location, 0)
     out['total'] = total
