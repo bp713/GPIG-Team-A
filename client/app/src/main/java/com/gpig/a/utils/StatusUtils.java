@@ -113,7 +113,7 @@ public final class StatusUtils {
             Location location = getLastKnownLocation(activity, true);
             assert location != null;
             GeoPoint currentLocation = new GeoPoint(location);
-            return targetLocation.distanceToAsDouble(currentLocation) < 20;
+            return targetLocation.distanceToAsDouble(currentLocation) < 200;
         }
         return false;
     }
