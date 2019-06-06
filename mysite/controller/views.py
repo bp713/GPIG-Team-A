@@ -22,9 +22,12 @@ def controller(request, controller_id):
             start_lat = form.cleaned_data['start_lat']
             end_long = form.cleaned_data['end_long']
             end_lat = form.cleaned_data['end_lat']
+            travel_time = int(form.cleaned_data['travel_time'])
+            rt.maxtraveltime = travel_time*60*60*1000
             courier = form.cleaned_data['courier_id'].controller_model
             point1 = '%s,%s' %(start_lat,start_long)
             point2 = '%s,%s' %(end_lat,end_long)
+
             assign_route(courier, point1, point2)
             return HttpResponseRedirect('couriers/')
     else:
