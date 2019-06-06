@@ -6,7 +6,7 @@ import os
 # Create your views here.
 def safety(request, locations):
     locations = locations.split(',')
-    jsonfile = open(os.path.join(settings.BASE_DIR, 'safety\data\scores.json'), 'r')
+    jsonfile = open(os.path.join(settings.BASE_DIR, 'safety/data/scores.json'), 'r')
     data = json.load(jsonfile)
     out = {}
     total = 0 
