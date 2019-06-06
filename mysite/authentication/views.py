@@ -76,7 +76,7 @@ def assetlinks(request):
           "target": {
             "namespace": "android_app",
             "package_name": "com.gpig.a",
-            "sha256_cert_fingerprints": ["2E:22:70:2C:26:9E:87:5D:E4:60:5E:A5:FC:85:90:CC:AC:C3:8A:85:E4:9D:67:96:2A:BB:CC:0D:EC:F1:4B:E8"]
+            "sha256_cert_fingerprints": ["5E:D1:5C:16:FA:28:8B:9C:BF:19:C5:AF:32:D4:51:EF:40:BA:05:B7:40:97:D9:5B:1C:60:9F:63:A4:E5:C4:D6","2E:22:70:2C:26:9E:87:5D:E4:60:5E:A5:FC:85:90:CC:AC:C3:8A:85:E4:9D:67:96:2A:BB:CC:0D:EC:F1:4B:E8"]
           }
         }]
     return HttpResponse(json.dumps(data), content_type="application/json")
