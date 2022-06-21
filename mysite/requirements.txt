@@ -3,4 +3,4 @@ git+git://github.com/eventlet/eventlet.git#egg=eventlet
 pandas==0.23.4
 cbor2==4.1.2
 git+git://github.com/pyauth/pywarp.git#egg=pywarp
-numpy==1.15.1
+numpy==1.22.0
